@@ -1,27 +1,26 @@
-import Konva from "konva";
-import { CanvasActions, CanvasReducerAction } from "../code/store/reducer";
+import { CanvasActions, CanvasReducerAction } from "../code/store/actions";
 
 export type ImageProps = {
-  imageX: number;
-  imageY: number;
-  imageWidth: number;
-  imageHeight: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 };
 
-export type CropRectProps = {
-  cropRectWidth: number;
-  cropRectHeight: number;
-};
+// export type CropRectProps = {
+//   cropRectWidth: number;
+//   cropRectHeight: number;
+// };
 
-export type StageDimensionsProps = {
-  stageWidth: number;
-  stageHeight: number;
-};
+// export type StageDimensionsProps = {
+//   stageWidth: number;
+//   stageHeight: number;
+// };
 
 export type CanvasProps = {
   imageProps: ImageProps;
-  cropRect: CropRectProps;
-  stageDimensions: StageDimensionsProps;
+  cropRect: ImageProps;
+  stageDimensions: ImageProps;
   canvasAction: CanvasActions;
 };
 
@@ -33,7 +32,7 @@ export type CanvasHistoryState = {
 
 export type KonvaContextType = {
   canvasState: CanvasHistoryState;
-  // canvasDispatch: React.Dispatch<CanvasReducerAction>;
+  dispatch: React.Dispatch<CanvasReducerAction>;
   // handleDragMove: (e: Konva.KonvaEventObject<DragEvent>) => void;
   // handleUndo: () => void;
   // handleRedo: () => void;

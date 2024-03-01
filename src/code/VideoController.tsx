@@ -6,11 +6,12 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Stage, Layer, Image, Rect, Transformer, Group } from "react-konva";
 import Konva from "konva";
 import useKonvaContext from "./useKonvaContext";
-import { CanvasActions } from "./store/reducer";
+import { CanvasActions } from "./store/actions";
 
 const VideoController = () => {
   const {
     canvasState,
+    dispatch,
     // handleDragMove,
     // handleUndo,
     // handleRedo,
@@ -20,12 +21,7 @@ const VideoController = () => {
   } = useKonvaContext();
 
   const {
-    current: {
-      imageProps: { imageHeight, imageWidth, imageX, imageY },
-      cropRect: { cropRectHeight, cropRectWidth },
-      stageDimensions: { stageHeight, stageWidth },
-      canvasAction,
-    },
+    current: { imageProps, cropRect, stageDimensions, canvasAction },
   } = canvasState;
 
   useEffect(
@@ -70,6 +66,11 @@ const VideoController = () => {
     }
     // @ts-ignore
     animationRef.current = requestAnimationFrame(updateCanvas);
+    return () => {
+      animationRef &&
+        animationRef.current &&
+        cancelAnimationFrame(animationRef.current);
+    };
   }, [videoRef]);
 
   const initialLoad = useRef(false);
@@ -108,25 +109,25 @@ const VideoController = () => {
   //     }
   //   }, [updateCanvas, videoLoaded, videoRef]);
 
-  useEffect(() => {
-    const animationFrameId = requestAnimationFrame(updateCanvas);
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [updateCanvas]);
+  // useEffect(() => {
+  //   const animationFrameId = requestAnimationFrame(updateCanvas);
+  //   return () => {
+  //     cancelAnimationFrame(animationFrameId);
+  //   };
+  // }, [updateCanvas]);
 
   const [showBlank, setShowBlank] = useState<boolean>(false);
 
   const transformerRef = React.useRef();
 
-  console.log(canvasState);
+  // console.log(canvasState);
   const rectRef = useRef();
-  const [clipDimensions, setClipDimensions] = useState({
-    x: 0,
-    y: 0,
-    width: 720,
-    height: 360,
-  });
+  // const [clipDimensions, setClipDimensions] = useState({
+  //   x: 0,
+  //   y: 0,
+  //   width: 720,
+  //   height: 360,
+  // });
 
   // Confirm crop selection
   const confirmCrop = () => {
@@ -155,7 +156,7 @@ const VideoController = () => {
       width,
       height,
     };
-    setClipDimensions({ x, y, width, height });
+    // setClipDimensions({ x, y, width, height });
 
     // imageDispatch({
     // 	type: "crop",
@@ -175,22 +176,18 @@ const VideoController = () => {
     // 		imageAction: CanvasActions.NONE,
     // 	},
     // });
-
-    const aspectRatio = 9 / 16;
-    // Calculate new canvas width to maintain the aspect ratio based on the current height
-    const newWidth = stageHeight * aspectRatio;
-
-    // Calculate new video dimensions and position to fit the TikTok format
-    const scale = Math.min(stageHeight / imageHeight, newWidth / imageWidth);
-    const newVideoWidth = imageWidth * scale;
-    const newVideoHeight = imageHeight * scale;
-    const newX = (newWidth - newVideoWidth) / 2;
-    const newY = (stageHeight - newVideoHeight) / 2;
-
+    // const aspectRatio = 9 / 16;
+    // // Calculate new canvas width to maintain the aspect ratio based on the current height
+    // const newWidth = stageHeight * aspectRatio;
+    // // Calculate new video dimensions and position to fit the TikTok format
+    // const scale = Math.min(stageHeight / imageHeight, newWidth / imageWidth);
+    // const newVideoWidth = imageWidth * scale;
+    // const newVideoHeight = imageHeight * scale;
+    // const newX = (newWidth - newVideoWidth) / 2;
+    // const newY = (stageHeight - newVideoHeight) / 2;
     // Update canvas, video dimensions, and video position
     // setVideoDimensions({ width: newVideoWidth, height: newVideoHeight });
     // setVideoPosition({ x: newX, y: newY });
-
     // imageDispatch({
     // 	type: "crop",
     // 	payload: {
@@ -212,17 +209,17 @@ const VideoController = () => {
 
     const aspectRatio = 16 / 9;
     // Calculate new canvas width to maintain the aspect ratio based on the current height
-    const newWidth = stageHeight * aspectRatio;
+    // const newWidth = stageHeight * aspectRatio;
 
-    // Calculate new video dimensions and position to fit the YouTube format
-    const scale = Math.min(stageHeight / imageHeight, newWidth / imageWidth);
-    const newVideoWidth = imageWidth * scale;
-    const newVideoHeight = imageHeight * scale;
-    const newX = (newWidth - newVideoWidth) / 2;
-    const newY = (stageHeight - newVideoHeight) / 2;
+    // // Calculate new video dimensions and position to fit the YouTube format
+    // const scale = Math.min(stageHeight / imageHeight, newWidth / imageWidth);
+    // const newVideoWidth = imageWidth * scale;
+    // const newVideoHeight = imageHeight * scale;
+    // const newX = (newWidth - newVideoWidth) / 2;
+    // const newY = (stageHeight - newVideoHeight) / 2;
 
     // Update canvas, video dimensions, and video position
-    console.log(newWidth);
+    // console.log(newWidth);
     // setStageDimensions({ width: newWidth, height: stageHeight });
     // setVideoDimensions({ width: newVideoWidth, height: newVideoHeight });
     // setVideoPosition({ x: newX, y: newY });
@@ -260,96 +257,94 @@ const VideoController = () => {
     }
   }, [canvasAction]);
 
-  const constrainRect = (pos: any) => {
-    const snapThreshold = 20; // pixels within which snapping occurs
+  // const constrainRect = (pos: any) => {
+  //   const snapThreshold = 20; // pixels within which snapping occurs
 
-    let x = pos.x;
-    let y = pos.y;
-    const rectRight = x + cropRectWidth;
-    const rectBottom = y + cropRectHeight;
+  //   let x = pos.x;
+  //   let y = pos.y;
+  //   const rectRight = x + cropRectWidth;
+  //   const rectBottom = y + cropRectHeight;
 
-    // Constrain horizontally
-    if (x < 0) x = 0;
-    if (rectRight > stageWidth) {
-      x = stageWidth - cropRectWidth;
-    }
+  //   // Constrain horizontally
+  //   if (x < 0) x = 0;
+  //   if (rectRight > stageWidth) {
+  //     x = stageWidth - cropRectWidth;
+  //   }
 
-    // Constrain vertically
-    if (y < 0) y = 0;
-    if (rectBottom > stageHeight) {
-      y = stageHeight - cropRectHeight;
-    }
+  //   // Constrain vertically
+  //   if (y < 0) y = 0;
+  //   if (rectBottom > stageHeight) {
+  //     y = stageHeight - cropRectHeight;
+  //   }
 
-    const centerSnap = (stageWidth - cropRectWidth) / 2;
+  //   const centerSnap = (stageWidth - cropRectWidth) / 2;
 
-    // Snap to the center if within threshold
-    if (Math.abs(centerSnap - x) <= snapThreshold) {
-      x = centerSnap;
-    }
+  //   // Snap to the center if within threshold
+  //   if (Math.abs(centerSnap - x) <= snapThreshold) {
+  //     x = centerSnap;
+  //   }
 
-    return { x, y };
-  };
+  //   return { x, y };
+  // };
 
-  const getSnapPosition = (
-    pos: any,
-    scaledSize: { width: number; height: number }
-  ) => {
-    const snapThreshold = 5;
+  // const getSnapPosition = (
+  //   pos: any,
+  //   scaledSize: { width: number; height: number }
+  // ) => {
+  //   const snapThreshold = 5;
 
-    // Define potential snap positions based on the scaled size
-    const snaps = {
-      top: 0,
-      bottom: stageHeight - scaledSize.height,
-      left: 0,
-      right: stageWidth - scaledSize.width,
-      centerX: (stageWidth - scaledSize.width) / 2,
-      centerY: (stageHeight - scaledSize.height) / 2,
-    };
+  //   // Define potential snap positions based on the scaled size
+  //   const snaps = {
+  //     top: 0,
+  //     bottom: stageHeight - scaledSize.height,
+  //     left: 0,
+  //     right: stageWidth - scaledSize.width,
+  //     centerX: (stageWidth - scaledSize.width) / 2,
+  //     centerY: (stageHeight - scaledSize.height) / 2,
+  //   };
 
-    // Calculate the distance to each snap position
-    const distances = {
-      top: Math.abs(pos.y),
-      bottom: Math.abs(pos.y - snaps.bottom),
-      left: Math.abs(pos.x),
-      right: Math.abs(pos.x - snaps.right),
-      centerX: Math.abs(pos.x + scaledSize.width / 2 - stageWidth / 2),
-      centerY: Math.abs(pos.y + scaledSize.height / 2 - stageHeight / 2),
-    };
+  //   // Calculate the distance to each snap position
+  //   const distances = {
+  //     top: Math.abs(pos.y),
+  //     bottom: Math.abs(pos.y - snaps.bottom),
+  //     left: Math.abs(pos.x),
+  //     right: Math.abs(pos.x - snaps.right),
+  //     centerX: Math.abs(pos.x + scaledSize.width / 2 - stageWidth / 2),
+  //     centerY: Math.abs(pos.y + scaledSize.height / 2 - stageHeight / 2),
+  //   };
 
-    // Initial new positions are the current positions
-    let newX = pos.x;
-    let newY = pos.y;
+  //   // Initial new positions are the current positions
+  //   let newX = pos.x;
+  //   let newY = pos.y;
 
-    // Determine the closest snap positions based on these distances
-    Object.entries(distances).forEach(([key, distance]) => {
-      if (distance < snapThreshold) {
-        switch (key) {
-          case "top":
-            newY = snaps.top;
-            break;
-          case "bottom":
-            newY = snaps.bottom;
-            break;
-          case "left":
-            newX = snaps.left;
-            break;
-          case "right":
-            newX = snaps.right;
-            break;
-          case "centerX":
-            newX = snaps.centerX;
-            break;
-          case "centerY":
-            newY = snaps.centerY;
-            break;
-        }
-      }
-    });
+  //   // Determine the closest snap positions based on these distances
+  //   Object.entries(distances).forEach(([key, distance]) => {
+  //     if (distance < snapThreshold) {
+  //       switch (key) {
+  //         case "top":
+  //           newY = snaps.top;
+  //           break;
+  //         case "bottom":
+  //           newY = snaps.bottom;
+  //           break;
+  //         case "left":
+  //           newX = snaps.left;
+  //           break;
+  //         case "right":
+  //           newX = snaps.right;
+  //           break;
+  //         case "centerX":
+  //           newX = snaps.centerX;
+  //           break;
+  //         case "centerY":
+  //           newY = snaps.centerY;
+  //           break;
+  //       }
+  //     }
+  //   });
 
-    return { x: newX, y: newY }; // Return the new position, possibly adjusted for snapping
-  };
-
-  const clickTimeout = useRef<NodeJS.Timeout | null>(null);
+  //   return { x: newX, y: newY }; // Return the new position, possibly adjusted for snapping
+  // };
 
   const handleDblClick = () => {
     if (clickTimeout.current) {
@@ -369,42 +364,6 @@ const VideoController = () => {
   };
 
   // todo redo / undo make sure it works for resizing
-  const handleImageClick = () => {
-    if (clickTimeout.current !== null) {
-      clearTimeout(clickTimeout.current);
-      clickTimeout.current = null;
-    }
-    clickTimeout.current = setTimeout(() => {
-      // if (canvasState.current.canvasAction === CanvasActions.SELECT_RESIZE) {
-      //   console.log("here");
-      //   canvasDispatch({
-      //     type: CanvasActions.DESELECT_RESIZE,
-      //     payload: {
-      //       cropRectWidth,
-      //       cropRectHeight,
-      //     },
-      //   });
-      // } else {
-      //   canvasDispatch({
-      //     type: CanvasActions.SELECT_RESIZE,
-      //     payload: {
-      //       cropRectWidth,
-      //       cropRectHeight,
-      //     },
-      //   });
-      // }
-
-      clickTimeout.current = null;
-    }, 200);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (clickTimeout.current) {
-        clearTimeout(clickTimeout.current);
-      }
-    };
-  }, []);
 
   const loaded = useRef(false);
 
@@ -433,35 +392,77 @@ const VideoController = () => {
   // 	loaded.current = true;
   // };
 
-  const trRef = useRef(null);
-
+  // timer callback
+  const clickTimeout = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
-    if (canvasAction === CanvasActions.SELECT_RESIZE) {
-      const transformer = trRef.current;
-      const selectedNode = imageRef.current;
-      if (transformer && selectedNode) {
-        // @ts-ignore
-        transformer.nodes([selectedNode]);
-        // @ts-ignore
-        transformer.getLayer().batchDraw();
+    return () => {
+      if (clickTimeout.current) {
+        clearTimeout(clickTimeout.current);
       }
+    };
+  }, []);
+
+  // callback for image transformer
+  const trRef = useRef(null);
+  useEffect(() => {
+    // image transformer
+    const transformer = trRef && trRef.current;
+    const selectedNode = imageRef && imageRef.current;
+    if (transformer && selectedNode) {
+      // @ts-ignore
+      transformer.nodes([selectedNode]);
+      // @ts-ignore
+      transformer.getLayer().batchDraw();
     }
+    // }
   }, [canvasAction]);
+
+  // single click of image
+  const handleImageClick = () => {
+    if (clickTimeout.current !== null) {
+      clearTimeout(clickTimeout.current);
+      clickTimeout.current = null;
+    }
+    clickTimeout.current = setTimeout(() => {
+      if (canvasState.current.canvasAction === CanvasActions.IMAGE_RESIZE) {
+        console.log("iamge release");
+        dispatch({
+          type: CanvasActions.IMAGE_RELEASE,
+        });
+      } else {
+        console.log("image resize");
+        dispatch({
+          type: CanvasActions.IMAGE_RESIZE,
+        });
+      }
+    }, 200);
+  };
+
+  // redo
+  const handleRedo = () => {
+    dispatch({ type: CanvasActions.REDO });
+  };
+  // undo
+  const handleUndo = () => {
+    dispatch({ type: CanvasActions.UNDO });
+  };
 
   return (
     <div style={{ background: "white" }}>
       <button onClick={setTikTokFormat}>Set TikTok Format (9:16)</button>
       <button onClick={setYoutubeFormat}>Set Youtube Format (16:9)</button>
       <button onClick={showCrop}>Crop Video</button>
-      {/* <button onClick={handleRedo}>redo</button> */}
-      {/* <button onClick={handleUndo}>undo</button> */}
+      <button onClick={handleRedo}>redo</button>
+      <button onClick={handleUndo}>undo</button>
       <Stage
         id="stage"
-        width={stageWidth}
-        height={stageHeight}
+        x={stageDimensions.x}
+        y={stageDimensions.y}
+        width={stageDimensions.width}
+        height={stageDimensions.height}
         style={{
-          width: stageWidth,
-          height: stageHeight,
+          width: stageDimensions.width,
+          height: stageDimensions.height,
           background: "red ",
           display: "flex",
           justifyContent: "center",
@@ -472,21 +473,17 @@ const VideoController = () => {
       >
         <Layer ref={layerRef} id="layer" style={{ background: "black" }}>
           <Group
-            clipX={
-              canvasAction === CanvasActions.SELECT_CROP ? clipDimensions.x : 0
-            }
-            clipY={
-              canvasAction === CanvasActions.SELECT_CROP ? clipDimensions.y : 0
-            }
+            clipX={canvasAction === CanvasActions.SELECT_CROP ? cropRect.x : 0}
+            clipY={canvasAction === CanvasActions.SELECT_CROP ? cropRect.y : 0}
             clipWidth={
               canvasAction === CanvasActions.SELECT_CROP
-                ? clipDimensions.width
-                : stageWidth
+                ? cropRect.width
+                : stageDimensions.width
             }
             clipHeight={
               canvasAction === CanvasActions.SELECT_CROP
-                ? clipDimensions.height
-                : stageHeight
+                ? cropRect.height
+                : stageDimensions.height
             }
             style={{
               background: "black",
@@ -497,11 +494,11 @@ const VideoController = () => {
               ref={imageRef}
               // @ts-ignore
               image={image}
-              width={imageWidth}
-              height={imageHeight}
+              width={imageProps.width}
+              height={imageProps.height}
               draggable
-              x={imageX}
-              y={imageY}
+              x={imageProps.x}
+              y={imageProps.y}
               shadowBlur={1000}
               // onDragEnd={handleDragEnd}
               // onDragMove={handleDragMove}
@@ -515,7 +512,7 @@ const VideoController = () => {
             />
           </Group>
 
-          {canvasAction === CanvasActions.SELECT_RESIZE && (
+          {canvasAction === CanvasActions.IMAGE_RESIZE && (
             <Transformer
               id="resize"
               //@ts-ignore
@@ -527,16 +524,16 @@ const VideoController = () => {
                 }
                 return newBox;
               }}
-              attachedTo={imageRef.current}
-              keepRatio={true}
+              flipEnabled={false}
+              keepRatio={false}
             />
           )}
           {canvasAction === CanvasActions.SELECT_CROP && (
             <>
               <Rect
                 id="crop"
-                width={cropRectWidth}
-                height={cropRectHeight}
+                width={cropRect.width}
+                height={cropRect.height}
                 fill="rgba(255,255,255,0.25)"
                 draggable
                 onDblClick={handleDblClick}
@@ -549,6 +546,7 @@ const VideoController = () => {
               <Transformer
                 // @ts-ignore
                 ref={transformerRef}
+                flipEnabled={false}
                 keepRatio={false}
                 // boundBoxFunc={(oldBox, newBox) => {
                 //   if (newBox.x < 0 || newBox.y < 0) {

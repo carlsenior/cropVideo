@@ -1,9 +1,12 @@
 import { useReducer, useMemo, createContext } from "react";
 import { canvasPropsReducer, initialCanvasHistoryState } from "./reducer";
+import { CanvasReducerAction } from "./actions";
 import { KonvaContextType } from "../../constants/types";
+import React from "react";
 
 const initialKonvaContextValue: KonvaContextType = {
   canvasState: initialCanvasHistoryState,
+  dispatch: () => {},
   // canvasDispatch: () => {},
   // handleDragMove: () => {},
   // handleUndo: () => {},
@@ -18,7 +21,7 @@ export const KonvaContext = createContext<KonvaContextType>(
 );
 
 export const KonvaProvider = ({ children }: { children: React.ReactNode }) => {
-  const [canvasState, canvasDispatch] = useReducer(
+  const [canvasState, dispatch] = useReducer(
     canvasPropsReducer,
     initialCanvasHistoryState
   );
@@ -166,7 +169,7 @@ export const KonvaProvider = ({ children }: { children: React.ReactNode }) => {
   const values = useMemo(
     () => ({
       canvasState,
-      canvasDispatch,
+      dispatch,
       // handleDragMove,
       // handleUndo,
       // handleRedo,
@@ -176,7 +179,7 @@ export const KonvaProvider = ({ children }: { children: React.ReactNode }) => {
     }),
     [
       canvasState,
-      canvasDispatch,
+      dispatch,
       // handleDragMove,
       // handleUndo,
       // handleRedo,
