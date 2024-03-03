@@ -424,6 +424,7 @@ const VideoController = () => {
       <button onClick={() => dispatch({ type: CanvasActions.CONFIRM_CROP })}>
         Confirm Crop
       </button>
+      <br />
       <video
         ref={videoRef}
         src={src}
