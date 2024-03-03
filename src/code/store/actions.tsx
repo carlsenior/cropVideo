@@ -10,19 +10,16 @@ export enum CanvasActions {
   DESELECT_CROP = "DESELECT_CROP",
   SAVE_CROP_DIMENSION = "SAVE_CROP_DIMENSION",
   SAVE_IMAGE_DIMENSION = "SAVE_IMAGE_DIMENSION",
+  SET_YOUTUBE_FORMAT = "SET_YOUTUBE_FORMAT",
+  SET_TIKTOK_FORMAT = "SET_TIKTOK_FORMAT",
 
-  RESIZE = "resize",
   CROP = "crop",
-  DRAG_MOVE = "drag_move",
-  DRAG_END = "drag_end",
-  DRAG_START = "drag_start",
   // todo: set aspect ratio. tik tok format vs youtube format etc.
   // todo: add text to canvas
 }
 
 export type CanvasReducerAction =
   | { type: CanvasActions.NONE }
-  | { type: CanvasActions.RESIZE; payload: ImageProps }
   | {
       type: CanvasActions.CROP;
       payload: {
@@ -56,17 +53,5 @@ export type CanvasReducerAction =
         height: number;
       };
     }
-  | {
-      type: CanvasActions.DRAG_MOVE;
-      payload: { imageX: number; imageY: number };
-    }
-  | {
-      type: CanvasActions.DRAG_END;
-      payload: { imageX: number; imageY: number };
-    }
-  | {
-      type: CanvasActions.DRAG_START;
-    }
-  | { type: "undo" }
-  | { type: "redo" }
-  | { type: "reset" };
+  | { type: CanvasActions.SET_YOUTUBE_FORMAT }
+  | { type: CanvasActions.SET_TIKTOK_FORMAT };

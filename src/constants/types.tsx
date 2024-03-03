@@ -5,6 +5,7 @@ export type ImageProps = {
   y: number;
   width: number;
   height: number;
+  restrict: number;
 };
 
 // export type CropRectProps = {

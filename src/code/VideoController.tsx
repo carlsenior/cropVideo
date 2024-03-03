@@ -2,7 +2,7 @@
 const src =
   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Stage, Layer, Image, Transformer, Group, Rect } from "react-konva";
 import Konva from "konva";
 import useKonvaContext from "./useKonvaContext";
@@ -18,37 +18,35 @@ const VideoController = () => {
     redoStack,
   } = canvasState;
 
-  useEffect(
-    () => {
-      const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.ctrlKey || event.metaKey) {
-          // if (event.key === "z") {
-          //   canvasDispatch({
-          //     type: "undo",
-          //   });
-          // } else if (event.key === "y") {
-          //   canvasDispatch({
-          //     type: "redo",
-          //   });
-          // }
-        }
-      };
-
-      document.addEventListener("keydown", handleKeyDown);
-
-      return () => {
-        document.removeEventListener("keydown", handleKeyDown);
-      };
-    },
-    [
-      /*canvasDispatch*/
-    ]
-  );
-
   const [image, setImage] = useState<Konva.Image | undefined>(undefined);
   const imageRef = useRef<Konva.Image>(null);
-
   const videoRef = useRef(null);
+  const animationRef = useRef(null);
+  const layerRef = useRef(null);
+  const trRef = useRef(null);
+  const transformerRef = useRef();
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey) {
+        if (event.key === "z") {
+          dispatch({
+            type: CanvasActions.UNDO,
+          });
+        } else if (event.key === "y") {
+          dispatch({
+            type: CanvasActions.REDO,
+          });
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const updateCanvas = useCallback(() => {
     // @ts-ignore
@@ -113,82 +111,16 @@ const VideoController = () => {
   };
 
   const setTikTokFormat = () => {
-    // imageDispatch({
-    // 	type: "set_image_action",
-    // 	payload: {
-    // 		imageAction: CanvasActions.NONE,
-    // 	},
-    // });
-    // const aspectRatio = 9 / 16;
-    // // Calculate new canvas width to maintain the aspect ratio based on the current height
-    // const newWidth = stageHeight * aspectRatio;
-    // // Calculate new video dimensions and position to fit the TikTok format
-    // const scale = Math.min(stageHeight / imageHeight, newWidth / imageWidth);
-    // const newVideoWidth = imageWidth * scale;
-    // const newVideoHeight = imageHeight * scale;
-    // const newX = (newWidth - newVideoWidth) / 2;
-    // const newY = (stageHeight - newVideoHeight) / 2;
-    // Update canvas, video dimensions, and video position
-    // setVideoDimensions({ width: newVideoWidth, height: newVideoHeight });
-    // setVideoPosition({ x: newX, y: newY });
-    // imageDispatch({
-    // 	type: "crop",
-    // 	payload: {
-    // 		width: newVideoWidth,
-    // 		height: newVideoHeight,
-    // 		x: newX,
-    // 		y: newY,
-    // 	},
-    // });
+    dispatch({
+      type: CanvasActions.SET_TIKTOK_FORMAT,
+    });
   };
 
   const setYoutubeFormat = () => {
-    // imageDispatch({
-    // 	type: "set_image_action",
-    // 	payload: {
-    // 		imageAction: CanvasActions.NONE,
-    // 	},
-    // });
-
-    const aspectRatio = 16 / 9;
-    // Calculate new canvas width to maintain the aspect ratio based on the current height
-    // const newWidth = stageHeight * aspectRatio;
-
-    // // Calculate new video dimensions and position to fit the YouTube format
-    // const scale = Math.min(stageHeight / imageHeight, newWidth / imageWidth);
-    // const newVideoWidth = imageWidth * scale;
-    // const newVideoHeight = imageHeight * scale;
-    // const newX = (newWidth - newVideoWidth) / 2;
-    // const newY = (stageHeight - newVideoHeight) / 2;
-
-    // Update canvas, video dimensions, and video position
-    // console.log(newWidth);
-    // setStageDimensions({ width: newWidth, height: stageHeight });
-    // setVideoDimensions({ width: newVideoWidth, height: newVideoHeight });
-    // setVideoPosition({ x: newX, y: newY });
-
-    // imageDispatch({
-    // 	type: "crop",
-    // 	payload: {
-    // 		width: newVideoWidth,
-    // 		height: newVideoHeight,
-    // 		x: newX,
-    // 		y: newY,
-    // 	},
-    // });
+    dispatch({
+      type: CanvasActions.SET_YOUTUBE_FORMAT,
+    });
   };
-
-  const showCrop = () => {
-    // imageDispatch({
-    // 	type: "set_image_action",
-    // 	payload: {
-    // 		imageAction: CanvasActions.CROP,
-    // 	},
-    // });
-  };
-
-  const animationRef = useRef(null);
-  const layerRef = useRef(null);
 
   const getNodePosition = (node: any) => {
     if (!node) return null;
@@ -248,7 +180,7 @@ const VideoController = () => {
   }, []);
 
   // effect for image transformer
-  const trRef = useRef(null);
+
   useEffect(() => {
     // image transformer
     const transformer = trRef && trRef.current;
@@ -271,7 +203,7 @@ const VideoController = () => {
   }, [canvasAction, imageProps]);
 
   // effect for crop transformer
-  const transformerRef = React.useRef();
+
   useEffect(() => {
     if (transformerRef && transformerRef.current) {
       // Update the transformer's nodes
@@ -367,7 +299,7 @@ const VideoController = () => {
     <div style={{ background: "white" }}>
       <button onClick={setTikTokFormat}>Set TikTok Format (9:16)</button>
       <button onClick={setYoutubeFormat}>Set Youtube Format (16:9)</button>
-      <button onClick={showCrop}>Crop Video</button>
+      <button>Crop Video</button>
       <button onClick={handleRedo} disabled={redoStack.length === 0}>
         redo
       </button>
@@ -442,7 +374,11 @@ const VideoController = () => {
               keepRatio={false}
               boundBoxFunc={(oldBox, newBox) => {
                 // limits for resizing
-                if (newBox.width < 100 || newBox.height < 100) return oldBox;
+                if (
+                  newBox.width < imageProps.restrict ||
+                  newBox.height < imageProps.restrict
+                )
+                  return oldBox;
                 if (newBox.x < 0 || newBox.y < 0) return oldBox;
                 if (
                   Math.round(newBox.x) + Math.round(newBox.width) >
@@ -482,7 +418,11 @@ const VideoController = () => {
                 flipEnabled={false}
                 keepRatio={false}
                 boundBoxFunc={(oldBox, newBox) => {
-                  if (newBox.width < 100 || newBox.height < 100) return oldBox;
+                  if (
+                    newBox.width < cropRect.restrict ||
+                    newBox.height < cropRect.restrict
+                  )
+                    return oldBox;
                   if (newBox.x < 0 || newBox.y < 0) return oldBox;
                   if (
                     Math.round(newBox.x) + Math.round(newBox.width) >

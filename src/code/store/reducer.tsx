@@ -11,8 +11,7 @@ const initialRect = {
   y: 0,
   width: 720,
   height: 360,
-  scaleX: 1,
-  scaleY: 1,
+  restrict: 100,
 };
 
 const initialCanvasState: CanvasProps = {
@@ -26,7 +25,6 @@ export const initialCanvasHistoryState: CanvasHistoryState = {
   current: initialCanvasState,
   undoStack: [initialCanvasState],
   redoStack: [],
-  // inUndoRedo: false,
 };
 
 function recordHistory(draft: CanvasHistoryState) {
@@ -40,13 +38,6 @@ export function canvasPropsReducer(
 ) {
   return produce(state, (draft) => {
     switch (action.type) {
-      case CanvasActions.RESIZE:
-        //   recordHistory(draft);
-
-        // draft.current.imageProps.imageWidth = action.payload.width;
-        // draft.current.imageProps.imageHeight = action.payload.height;
-        break;
-
       case CanvasActions.CROP:
         //   recordHistory(draft);
 
@@ -61,21 +52,6 @@ export function canvasPropsReducer(
         //   imageY: action.payload.imageY,
         // };
         break;
-
-      case CanvasActions.DRAG_START:
-        //   recordHistory(draft);
-        break;
-
-      case CanvasActions.DRAG_MOVE:
-        // draft.current.imageProps.imageX = action.payload.imageX;
-        // draft.current.imageProps.imageY = action.payload.imageY;
-        break;
-
-      case CanvasActions.DRAG_END:
-        // draft.current.imageProps.imageX = action.payload.imageX;
-        // draft.current.imageProps.imageY = action.payload.imageY;
-        break;
-
       case CanvasActions.SELECT_IMAGE:
         draft.current.canvasAction = CanvasActions.SELECT_IMAGE;
         recordHistory(draft);
@@ -109,14 +85,46 @@ export function canvasPropsReducer(
         recordHistory(draft);
         break;
       case CanvasActions.SAVE_CROP_DIMENSION:
-        draft.current.cropRect = action.payload;
+        draft.current.cropRect = {
+          ...draft.current.cropRect,
+          ...action.payload,
+        };
         draft.current.canvasAction = CanvasActions.SELECT_CROP;
         recordHistory(draft);
         break;
       case CanvasActions.SAVE_IMAGE_DIMENSION:
-        draft.current.imageProps = action.payload;
+        draft.current.imageProps = {
+          ...draft.current.imageProps,
+          ...action.payload,
+        };
         draft.current.canvasAction = CanvasActions.SELECT_IMAGE;
         recordHistory(draft);
+        break;
+      case CanvasActions.SET_YOUTUBE_FORMAT:
+      case CanvasActions.SET_TIKTOK_FORMAT:
+        const aspectRatio =
+          action.type === CanvasActions.SET_YOUTUBE_FORMAT ? 16 / 9 : 9 / 16;
+        const oldWidth = draft.current.stageDimensions.width;
+        draft.current.stageDimensions.width =
+          draft.current.stageDimensions.height * aspectRatio;
+        // calculate how much should be changed based on old width
+        const scaleX = draft.current.stageDimensions.width / oldWidth;
+        // update all width and x coordinates
+        draft.current.imageProps = {
+          ...draft.current.imageProps,
+          width: draft.current.imageProps.width * scaleX,
+          x: draft.current.imageProps.x * scaleX,
+          restrict: draft.current.imageProps.restrict * scaleX,
+        };
+        draft.current.cropRect = {
+          ...draft.current.cropRect,
+          width: draft.current.cropRect.width * scaleX,
+          x: draft.current.cropRect.x * scaleX,
+          restrict: draft.current.cropRect.restrict * scaleX,
+        };
+        draft.current.canvasAction = CanvasActions.NONE;
+        recordHistory(draft);
+        break;
       default:
     }
     return draft;
