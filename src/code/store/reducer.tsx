@@ -39,18 +39,27 @@ export function canvasPropsReducer(
   return produce(state, (draft) => {
     switch (action.type) {
       case CanvasActions.CROP:
-        //   recordHistory(draft);
+        // draft.current.actualCropedRect = {
+        //   x: Math.max(draft.current.imageProps.x, draft.current.cropRect.x),
+        //   y: Math.max(draft.current.imageProps.y, draft.current.cropRect.y),
+        //   width: Math.max(
+        //     0,
+        //     Math.min(
+        //       draft.current.cropRect.x + draft.current.cropRect.width,
+        //       draft.current.imageProps.x + draft.current.imageProps.width
+        //     ) - Math.max(draft.current.imageProps.x, draft.current.cropRect.x)
+        //   ),
+        //   height: Math.max(
+        //     0,
+        //     Math.min(
+        //       draft.current.cropRect.y + draft.current.cropRect.height,
+        //       draft.current.imageProps.y + draft.current.imageProps.height
+        //     ) - Math.max(draft.current.imageProps.y, draft.current.cropRect.y)
+        //   ),
+        // };
 
-        // draft.current.cropRect = {
-        //   cropRectWidth: action.payload.width,
-        //   cropRectHeight: action.payload.height,
-        // };
-        // draft.current.imageProps = {
-        //   ...draft.current.imageProps,
-        //   // todo, should X and Y be 0,0 after cropping?
-        //   imageX: action.payload.imageX,
-        //   imageY: action.payload.imageY,
-        // };
+        // draft.current.canvasAction = CanvasActions.CROP;
+        // recordHistory(draft);
         break;
       case CanvasActions.SELECT_IMAGE:
         draft.current.canvasAction = CanvasActions.SELECT_IMAGE;

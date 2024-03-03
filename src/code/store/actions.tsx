@@ -12,23 +12,14 @@ export enum CanvasActions {
   SAVE_IMAGE_DIMENSION = "SAVE_IMAGE_DIMENSION",
   SET_YOUTUBE_FORMAT = "SET_YOUTUBE_FORMAT",
   SET_TIKTOK_FORMAT = "SET_TIKTOK_FORMAT",
-
-  CROP = "crop",
+  CROP = "CROP",
   // todo: set aspect ratio. tik tok format vs youtube format etc.
   // todo: add text to canvas
 }
 
 export type CanvasReducerAction =
   | { type: CanvasActions.NONE }
-  | {
-      type: CanvasActions.CROP;
-      payload: {
-        imageX: number;
-        imageY: number;
-        width: number;
-        height: number;
-      };
-    }
+  | { type: CanvasActions.CROP }
   | { type: CanvasActions.SELECT_IMAGE }
   | { type: CanvasActions.RELEASE_IMAGE }
   | { type: CanvasActions.UNDO }

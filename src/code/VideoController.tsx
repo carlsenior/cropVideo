@@ -191,13 +191,10 @@ const VideoController = () => {
     }
 
     if (transformer && selectedNode) {
-      selectedNode.setDraggable(true);
       // @ts-ignore
       transformer.nodes([selectedNode]);
       // @ts-ignore
       transformer.getLayer().batchDraw();
-    } else if (!transformer) {
-      selectedNode!.setDraggable(false);
     }
     // }
   }, [canvasAction, imageProps]);
@@ -295,11 +292,25 @@ const VideoController = () => {
     });
   };
 
+  const showCrop = () => {
+    dispatch({
+      type: CanvasActions.CROP,
+    });
+  };
+
   return (
     <div style={{ background: "white" }}>
       <button onClick={setTikTokFormat}>Set TikTok Format (9:16)</button>
       <button onClick={setYoutubeFormat}>Set Youtube Format (16:9)</button>
-      <button>Crop Video</button>
+      <button
+        onClick={showCrop}
+        disabled={
+          canvasAction !== CanvasActions.SELECT_CROP &&
+          canvasAction !== CanvasActions.CROP
+        }
+      >
+        Crop Video
+      </button>
       <button onClick={handleRedo} disabled={redoStack.length === 0}>
         redo
       </button>
@@ -324,20 +335,12 @@ const VideoController = () => {
         }}
         onDblClick={toggleCropPanel}
       >
-        <Layer ref={layerRef} id="layer" style={{ background: "black" }}>
+        <Layer ref={layerRef} id="layer">
           <Group
-            // clipX={canvasAction === CanvasActions.SELECT_CROP ? cropRect.x : 0}
-            // clipY={canvasAction === CanvasActions.SELECT_CROP ? cropRect.y : 0}
-            // clipWidth={
-            //   canvasAction === CanvasActions.SELECT_CROP
-            //     ? cropRect.width
-            //     : stageDimensions.width
-            // }
-            // clipHeight={
-            //   canvasAction === CanvasActions.SELECT_CROP
-            //     ? cropRect.height
-            //     : stageDimensions.height
-            // }
+            // clipX={actualCropedRect.x ?? 0}
+            // clipY={actualCropedRect.y ?? 0}
+            // clipWidth={actualCropedRect.width ?? stageDimensions.width}
+            // clipHeight={actualCropedRect.height ?? stageDimensions.height}
             style={{
               background: "black",
             }}
@@ -351,7 +354,8 @@ const VideoController = () => {
               y={imageProps.y}
               width={imageProps.width}
               height={imageProps.height}
-              shadowBlur={1000}
+              // shadowBlur={1000}
+              draggable={canvasAction === CanvasActions.SELECT_IMAGE}
               onDblClick={toggleCropPanel}
               onClick={toggleImagePanel}
               onDragEnd={saveImageDimension}

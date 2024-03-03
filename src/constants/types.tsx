@@ -8,11 +8,6 @@ export type ImageProps = {
   restrict: number;
 };
 
-// export type CropRectProps = {
-//   cropRectWidth: number;
-//   cropRectHeight: number;
-// };
-
 // export type StageDimensionsProps = {
 //   stageWidth: number;
 //   stageHeight: number;
