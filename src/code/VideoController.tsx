@@ -13,7 +13,7 @@ const VideoController = () => {
   const { canvasState, dispatch } = useKonvaContext();
 
   const {
-    current: { imageProps, cropRect, stageDimensions, canvasAction },
+    current: { imageProps, cropRect, stageDimensions, imageCrop, canvasAction },
     undoStack,
     redoStack,
     keepRatio,
@@ -22,10 +22,27 @@ const VideoController = () => {
   const [image, setImage] = useState<Konva.Image | undefined>(undefined);
   const imageRef = useRef<Konva.Image>(null);
   const videoRef = useRef(null);
+  const rectRef = useRef();
   const animationRef = useRef(null);
   const layerRef = useRef(null);
   const trRef = useRef(null);
   const transformerRef = useRef();
+
+  const [videoLoaded, setVideoLoaded] = useState(false);
+
+  const setVideoDimensions = () => {
+    dispatch({
+      type: CanvasActions.SET_IMAGE_CROP,
+      payload: {
+        x: 0,
+        y: 0,
+        // @ts-ignore
+        width: videoRef.current.videoWidth,
+        // @ts-ignore
+        height: videoRef.current.videoHeight,
+      },
+    });
+  };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -54,6 +71,7 @@ const VideoController = () => {
     if (videoRef.current && videoRef.current.readyState >= 3) {
       // @ts-ignore
       setImage(videoRef.current);
+
       // @ts-ignore
       layerRef.current.batchDraw();
     }
@@ -65,11 +83,6 @@ const VideoController = () => {
         cancelAnimationFrame(animationRef.current);
     };
   }, [videoRef]);
-
-  const initialLoad = useRef(false);
-  const [videoLoaded, setVideoLoaded] = useState(false);
-
-  const rectRef = useRef();
 
   // Confirm crop selection
   const confirmCrop = () => {
@@ -185,20 +198,21 @@ const VideoController = () => {
   useEffect(() => {
     // image transformer
     const transformer = trRef && trRef.current;
-    const selectedNode = imageRef && imageRef.current;
+    const imageNode = imageRef && imageRef.current;
 
-    if (selectedNode) {
-      selectedNode.scale({ x: 1, y: 1 });
+    if (imageNode) {
+      imageNode.scale({ x: 1, y: 1 });
+      imageNode.crop(imageCrop);
     }
 
-    if (transformer && selectedNode) {
+    if (transformer && imageNode) {
       // @ts-ignore
-      transformer.nodes([selectedNode]);
+      transformer.nodes([imageNode]);
       // @ts-ignore
       transformer.getLayer().batchDraw();
     }
     // }
-  }, [canvasAction, imageProps]);
+  }, [canvasAction, imageCrop, imageProps]);
 
   // effect for crop transformer
 
@@ -337,37 +351,27 @@ const VideoController = () => {
         onDblClick={toggleCropPanel}
       >
         <Layer ref={layerRef} id="layer">
-          <Group
-            // clipX={actualCropedRect.x ?? 0}
-            // clipY={actualCropedRect.y ?? 0}
-            // clipWidth={actualCropedRect.width ?? stageDimensions.width}
-            // clipHeight={actualCropedRect.height ?? stageDimensions.height}
+          <Image
+            id="image"
+            ref={imageRef}
+            // @ts-ignore
+            image={image}
+            x={imageProps.x}
+            y={imageProps.y}
+            width={imageProps.width}
+            height={imageProps.height}
+            // shadowBlur={1000}
+            draggable={canvasAction === CanvasActions.SELECT_IMAGE}
+            onDblClick={toggleCropPanel}
+            onClick={toggleImagePanel}
+            onDragEnd={saveImageDimension}
+            onTransformEnd={saveImageDimension}
+            dragBoundFunc={(pos) => constrainNode(pos, "image")}
             style={{
               background: "black",
             }}
-          >
-            <Image
-              id="image"
-              ref={imageRef}
-              // @ts-ignore
-              image={image}
-              x={imageProps.x}
-              y={imageProps.y}
-              width={imageProps.width}
-              height={imageProps.height}
-              // shadowBlur={1000}
-              draggable={canvasAction === CanvasActions.SELECT_IMAGE}
-              onDblClick={toggleCropPanel}
-              onClick={toggleImagePanel}
-              onDragEnd={saveImageDimension}
-              onTransformEnd={saveImageDimension}
-              dragBoundFunc={(pos) => constrainNode(pos, "image")}
-              style={{
-                background: "black",
-              }}
-              alt=""
-            />
-          </Group>
+            alt=""
+          />
 
           {canvasAction === CanvasActions.SELECT_IMAGE && (
             <Transformer
@@ -475,7 +479,7 @@ const VideoController = () => {
           setVideoLoaded(true);
         }}
         onLoadedData={updateCanvas}
-        // onLoadedMetadata={setVideoAndStageDimensions}
+        onLoadedMetadata={setVideoDimensions}
       >
         Your browser does not support the video tag.
       </video>

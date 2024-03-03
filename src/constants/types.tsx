@@ -8,15 +8,25 @@ export type ImageProps = {
   restrict: number;
 };
 
-// export type StageDimensionsProps = {
-//   stageWidth: number;
-//   stageHeight: number;
-// };
+export type ActualCropedProps = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+export type ImageCrop = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 export type CanvasProps = {
   imageProps: ImageProps;
   cropRect: ImageProps;
   stageDimensions: ImageProps;
+  imageCrop: ImageCrop;
   canvasAction: CanvasActions;
 };
 
