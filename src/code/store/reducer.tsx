@@ -73,12 +73,12 @@ export function canvasPropsReducer(
         // update image crop if there is new width and new height of intersection
         if (new_imageProps.width > 0 && new_imageProps.height > 0) {
           // draft.current.imageProps = new_imageProps;
-          // there are 5 available cases
+          // there are many of available cases
           let new_crop = { ...draft.current.imageCrop };
           // 1. case if intersection includes left-top corner of imageRect
           if (
             draft.current.imageProps.x === new_imageProps.x &&
-            draft.current.cropRect.y <= draft.current.imageProps.y
+            draft.current.imageProps.y === new_imageProps.y
           ) {
             new_crop.width *=
               Math.min(new_imageProps.width, draft.current.imageProps.width) /
@@ -91,14 +91,14 @@ export function canvasPropsReducer(
           else if (
             draft.current.imageProps.x + draft.current.imageProps.width ===
               new_imageProps.x + new_imageProps.width &&
-            draft.current.cropRect.y <= draft.current.imageProps.y
+            draft.current.imageCrop.y === new_imageProps.y
           ) {
-            const go_advance_x =
+            const move_advance_x =
               ((draft.current.imageProps.width - new_imageProps.width) /
                 draft.current.imageProps.width) *
               new_crop.width;
-            new_crop.x += go_advance_x;
-            new_crop.width -= go_advance_x;
+            new_crop.x += move_advance_x;
+            new_crop.width -= move_advance_x;
             new_crop.height *=
               Math.min(new_imageProps.height, draft.current.imageProps.height) /
               draft.current.imageProps.height;
@@ -106,14 +106,15 @@ export function canvasPropsReducer(
           // 3. case if intersection includes left-bottom corner of imageRect
           else if (
             draft.current.imageProps.x === new_imageProps.x &&
-            draft.current.cropRect.y > draft.current.imageProps.y
+            draft.current.imageProps.y + draft.current.imageProps.height ===
+              new_imageProps.y + new_imageProps.height
           ) {
-            const go_advance_y =
+            const move_advance_y =
               ((draft.current.imageProps.height - new_imageProps.height) /
                 draft.current.imageProps.height) *
               new_crop.height;
-            new_crop.y += go_advance_y;
-            new_crop.height -= go_advance_y;
+            new_crop.y += move_advance_y;
+            new_crop.height -= move_advance_y;
             new_crop.width *=
               Math.min(new_imageProps.width, draft.current.imageProps.width) /
               draft.current.imageProps.width;
@@ -122,20 +123,71 @@ export function canvasPropsReducer(
           else if (
             draft.current.imageProps.x + draft.current.imageProps.width ===
               new_imageProps.x + new_imageProps.width &&
-            draft.current.cropRect.y > draft.current.imageProps.y
+            draft.current.imageProps.y + draft.current.imageProps.height ===
+              new_imageProps.y + new_imageProps.height
           ) {
-            const go_advance_x =
+            const move_advance_x =
               ((draft.current.imageProps.width - new_imageProps.width) /
                 draft.current.imageProps.width) *
               new_crop.width;
-            const go_advance_y =
+            const move_advance_y =
               ((draft.current.imageProps.height - new_imageProps.height) /
                 draft.current.imageProps.height) *
               new_crop.height;
-            new_crop.x += go_advance_x;
-            new_crop.width -= go_advance_x;
-            new_crop.y += go_advance_y;
-            new_crop.height -= go_advance_y;
+            new_crop.x += move_advance_x;
+            new_crop.width -= move_advance_x;
+            new_crop.y += move_advance_y;
+            new_crop.height -= move_advance_y;
+          }
+          // 5. case if intersection includes no corners but intersect with middle in y-axis
+          else if (
+            new_imageProps.x > draft.current.imageProps.x &&
+            new_imageProps.x + new_imageProps.width <=
+              draft.current.imageProps.x + draft.current.imageProps.width
+          ) {
+            const move_advance_x =
+              ((new_imageProps.x - draft.current.imageProps.x) /
+                draft.current.imageProps.width) *
+              new_crop.width;
+            new_crop.x += move_advance_x;
+            new_crop.width =
+              (new_imageProps.width / draft.current.imageProps.width) *
+              new_crop.width;
+            const move_advance_y =
+              ((Math.max(new_imageProps.y, draft.current.imageProps.y) -
+                draft.current.imageProps.y) /
+                draft.current.imageProps.height) *
+              new_crop.height;
+            new_crop.y += move_advance_y;
+            new_crop.height =
+              (new_imageProps.height / draft.current.imageProps.height) *
+              new_crop.height;
+          }
+          // 6. case if intersection includes no corners but intersect with middle in x-axis
+          else {
+            const move_advance_x =
+              ((Math.max(new_imageProps.x, draft.current.imageProps.x) -
+                draft.current.imageProps.x) /
+                draft.current.imageProps.width) *
+              new_crop.width;
+            new_crop.x += move_advance_x;
+            new_crop.width =
+              (Math.min(new_imageProps.width, draft.current.imageProps.width) /
+                draft.current.imageProps.width) *
+              new_crop.width;
+            const move_advance_y =
+              ((Math.max(new_imageProps.y, draft.current.imageProps.y) -
+                draft.current.imageProps.y) /
+                draft.current.imageProps.height) *
+              new_crop.height;
+            new_crop.y += move_advance_y;
+            new_crop.height =
+              (Math.min(
+                new_imageProps.height,
+                draft.current.imageProps.height
+              ) /
+                draft.current.imageProps.height) *
+              new_crop.height;
           }
           draft.current.imageProps = new_imageProps;
           draft.current.imageCrop = new_crop;
