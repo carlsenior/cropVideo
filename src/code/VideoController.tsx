@@ -3,35 +3,19 @@ const src =
   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import {
-  Stage,
-  Layer,
-  Image,
-  Transformer,
-  Group,
-  Rect,
-  KonvaNodeComponent,
-} from "react-konva";
+import { Stage, Layer, Image, Transformer, Group, Rect } from "react-konva";
 import Konva from "konva";
 import useKonvaContext from "./useKonvaContext";
 import { CanvasActions } from "./store/actions";
 import { Vector2d } from "konva/lib/types";
-import { KonvaEventObject } from "konva/lib/Node";
 
 const VideoController = () => {
-  const {
-    canvasState,
-    dispatch,
-    // handleDragMove,
-    // handleUndo,
-    // handleRedo,
-    // handleDragEnd,
-    // handleDragStart,
-    // canvasDispatch,
-  } = useKonvaContext();
+  const { canvasState, dispatch } = useKonvaContext();
 
   const {
     current: { imageProps, cropRect, stageDimensions, canvasAction },
+    undoStack,
+    redoStack,
   } = canvasState;
 
   useEffect(
@@ -86,55 +70,7 @@ const VideoController = () => {
   const initialLoad = useRef(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
 
-  // initial canvas load
-  //   useEffect(() => {
-  //     console.log("Checking video element and load status...");
-  //     if (!videoRef.current) return;
-
-  //     if (
-  //       videoLoaded &&
-  //       !initialLoad.current &&
-  //       videoRef.current.readyState >= 3
-  //     ) {
-  //       console.log("Video is ready, attempting to fetch first frame...");
-
-  //       videoRef.current.muted = true;
-  //       videoRef.current
-  //         .play()
-  //         .then(() => {
-  //           setTimeout(() => {
-  //             if (videoRef.current) {
-  //               console.log("Pausing video and updating canvas...");
-  //               videoRef.current.pause();
-  //               videoRef.current.muted = false;
-  //               videoRef.current.currentTime = 0;
-  //               updateCanvas();
-  //               initialLoad.current = true;
-  //             }
-  //           }, 100);
-  //         })
-  //         .catch((error) => {
-  //           console.error("Error attempting to play video:", error);
-  //         });
-  //     }
-  //   }, [updateCanvas, videoLoaded, videoRef]);
-
-  // useEffect(() => {
-  //   const animationFrameId = requestAnimationFrame(updateCanvas);
-  //   return () => {
-  //     cancelAnimationFrame(animationFrameId);
-  //   };
-  // }, [updateCanvas]);
-
-  const [showBlank, setShowBlank] = useState<boolean>(false);
-
   const rectRef = useRef();
-  // const [clipDimensions, setClipDimensions] = useState({
-  //   x: 0,
-  //   y: 0,
-  //   width: 720,
-  //   height: 360,
-  // });
 
   // Confirm crop selection
   const confirmCrop = () => {
@@ -254,141 +190,52 @@ const VideoController = () => {
   const animationRef = useRef(null);
   const layerRef = useRef(null);
 
-  const getRectPosition = () => {
-    if (!rectRef.current) return null;
-    const rect = rectRef.current;
+  const getNodePosition = (node: any) => {
+    if (!node) return null;
     // @ts-ignore
     const width =
       // @ts-ignore
-      rect.attrs.scaleX !== undefined
+      node.attrs.scaleX !== undefined
         ? // @ts-ignore
-          rect.attrs.width * rect.attrs.scaleX
+          node.attrs.width * node.attrs.scaleX
         : // @ts-ignore
-          rect.attrs.width;
+          node.attrs.width;
     // @ts-ignore
     const height =
       // @ts-ignore
-      rect.attrs.scaleY !== undefined
+      node.attrs.scaleY !== undefined
         ? // @ts-ignore
-          rect.attrs.height * rect.attrs.scaleY
+          node.attrs.height * node.attrs.scaleY
         : // @ts-ignore
-          rect.attrs.height;
+          node.attrs.height;
 
     return {
       // @ts-ignore
-      x: rect.attrs.x,
+      x: node.attrs.x,
       // @ts-ignore
-      y: rect.attrs.y,
+      y: node.attrs.y,
       width,
       height,
     };
   };
 
-  const constrainRect = (pos: Vector2d) => {
+  const constrainNode = (pos: Vector2d, that: string) => {
     if (pos.x < 0) pos.x = 0;
     if (pos.y < 0) pos.y = 0;
 
-    const rect = rectRef.current;
-    if (rect) {
-      const rectPosition = getRectPosition()!;
+    const node = that === "rect" ? rectRef.current : imageRef.current;
+    if (node) {
+      const nodePosition = getNodePosition(node)!;
 
-      if (pos.x + rectPosition.width > stageDimensions.width) {
-        pos.x = stageDimensions.width - rectPosition.width;
+      if (pos.x + nodePosition.width > stageDimensions.width) {
+        pos.x = stageDimensions.width - nodePosition.width;
       }
-      if (pos.y + rectPosition.height > stageDimensions.height) {
-        pos.y = stageDimensions.height - rectPosition.height;
+      if (pos.y + nodePosition.height > stageDimensions.height) {
+        pos.y = stageDimensions.height - nodePosition.height;
       }
     }
     return pos;
   };
-
-  // const getSnapPosition = (
-  //   pos: any,
-  //   scaledSize: { width: number; height: number }
-  // ) => {
-  //   const snapThreshold = 5;
-
-  //   // Define potential snap positions based on the scaled size
-  //   const snaps = {
-  //     top: 0,
-  //     bottom: stageHeight - scaledSize.height,
-  //     left: 0,
-  //     right: stageWidth - scaledSize.width,
-  //     centerX: (stageWidth - scaledSize.width) / 2,
-  //     centerY: (stageHeight - scaledSize.height) / 2,
-  //   };
-
-  //   // Calculate the distance to each snap position
-  //   const distances = {
-  //     top: Math.abs(pos.y),
-  //     bottom: Math.abs(pos.y - snaps.bottom),
-  //     left: Math.abs(pos.x),
-  //     right: Math.abs(pos.x - snaps.right),
-  //     centerX: Math.abs(pos.x + scaledSize.width / 2 - stageWidth / 2),
-  //     centerY: Math.abs(pos.y + scaledSize.height / 2 - stageHeight / 2),
-  //   };
-
-  //   // Initial new positions are the current positions
-  //   let newX = pos.x;
-  //   let newY = pos.y;
-
-  //   // Determine the closest snap positions based on these distances
-  //   Object.entries(distances).forEach(([key, distance]) => {
-  //     if (distance < snapThreshold) {
-  //       switch (key) {
-  //         case "top":
-  //           newY = snaps.top;
-  //           break;
-  //         case "bottom":
-  //           newY = snaps.bottom;
-  //           break;
-  //         case "left":
-  //           newX = snaps.left;
-  //           break;
-  //         case "right":
-  //           newX = snaps.right;
-  //           break;
-  //         case "centerX":
-  //           newX = snaps.centerX;
-  //           break;
-  //         case "centerY":
-  //           newY = snaps.centerY;
-  //           break;
-  //       }
-  //     }
-  //   });
-
-  //   return { x: newX, y: newY }; // Return the new position, possibly adjusted for snapping
-  // };
-
-  // todo redo / undo make sure it works for resizing
-
-  const loaded = useRef(false);
-
-  // todo dispatch the data to stage dimensions object in canvas props, right now using a default value
-  // const setVideoAndStageDimensions = () => {
-  // 	if (loaded.current) {
-  // 		const videoElement = videoRef.current;
-  // 		if (videoElement) {
-  // 			const naturalWidth = videoElement.videoWidth;
-  // 			const naturalHeight = videoElement.videoHeight;
-
-  // 			imageDispatch({
-  // 				type: "set_dimensions",
-  // 				payload: {
-  // 					width: naturalWidth,
-  // 					height: naturalHeight,
-  // 				},
-  // 			});
-
-  // 			setStageDimensions({
-  // 				width: naturalWidth,
-  // 				height: naturalHeight,
-  // 			});
-  // 		}
-  // 	}
-  // 	loaded.current = true;
-  // };
 
   // timer callback
   const clickTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -406,14 +253,22 @@ const VideoController = () => {
     // image transformer
     const transformer = trRef && trRef.current;
     const selectedNode = imageRef && imageRef.current;
+
+    if (selectedNode) {
+      selectedNode.scale({ x: 1, y: 1 });
+    }
+
     if (transformer && selectedNode) {
+      selectedNode.setDraggable(true);
       // @ts-ignore
       transformer.nodes([selectedNode]);
       // @ts-ignore
       transformer.getLayer().batchDraw();
+    } else if (!transformer) {
+      selectedNode!.setDraggable(false);
     }
     // }
-  }, [canvasAction]);
+  }, [canvasAction, imageProps]);
 
   // effect for crop transformer
   const transformerRef = React.useRef();
@@ -432,7 +287,7 @@ const VideoController = () => {
   }, [canvasAction, cropRect]);
 
   // single click of image
-  const handleImageClick = () => {
+  const toggleImagePanel = () => {
     if (clickTimeout.current !== null) {
       clearTimeout(clickTimeout.current);
       clickTimeout.current = null;
@@ -465,25 +320,46 @@ const VideoController = () => {
       clearTimeout(clickTimeout.current);
       clickTimeout.current = null;
     }
-
-    if (canvasState.current.canvasAction === CanvasActions.SELECT_CROP) {
-      dispatch({
-        type: CanvasActions.DESELECT_CROP,
-      });
-    } else {
-      dispatch({
-        type: CanvasActions.SELECT_CROP,
-      });
-    }
+    clickTimeout.current = setTimeout(() => {
+      if (canvasState.current.canvasAction === CanvasActions.SELECT_CROP) {
+        dispatch({
+          type: CanvasActions.DESELECT_CROP,
+        });
+      } else {
+        dispatch({
+          type: CanvasActions.SELECT_CROP,
+        });
+      }
+    }, 200);
   };
 
   const saveCropPanelDimension = () => {
-    const rectPos = getRectPosition()!;
-    // @ts-ignore
-    // rectRef.current.scale({ x: 1, y: 1 });
+    const rectPos = getNodePosition(rectRef.current)!;
+    if (
+      cropRect.x === Math.round(rectPos.x) &&
+      cropRect.y === Math.round(rectPos.y) &&
+      cropRect.width === Math.round(rectPos.width) &&
+      cropRect.height === Math.round(rectPos.height)
+    )
+      return;
     dispatch({
       type: CanvasActions.SAVE_CROP_DIMENSION,
       payload: rectPos,
+    });
+  };
+
+  const saveImageDimension = () => {
+    const imagePos = getNodePosition(imageRef.current)!;
+    if (
+      imageProps.x === Math.round(imagePos.x) &&
+      imageProps.y === Math.round(imagePos.y) &&
+      imageProps.width === Math.round(imagePos.width) &&
+      imageProps.height === Math.round(imagePos.height)
+    )
+      return;
+    dispatch({
+      type: CanvasActions.SAVE_IMAGE_DIMENSION,
+      payload: imagePos,
     });
   };
 
@@ -492,8 +368,12 @@ const VideoController = () => {
       <button onClick={setTikTokFormat}>Set TikTok Format (9:16)</button>
       <button onClick={setYoutubeFormat}>Set Youtube Format (16:9)</button>
       <button onClick={showCrop}>Crop Video</button>
-      <button onClick={handleRedo}>redo</button>
-      <button onClick={handleUndo}>undo</button>
+      <button onClick={handleRedo} disabled={redoStack.length === 0}>
+        redo
+      </button>
+      <button onClick={handleUndo} disabled={undoStack.length === 1}>
+        undo
+      </button>
       <Stage
         id="stage"
         x={stageDimensions.x}
@@ -535,17 +415,16 @@ const VideoController = () => {
               ref={imageRef}
               // @ts-ignore
               image={image}
-              width={imageProps.width}
-              height={imageProps.height}
-              draggable
               x={imageProps.x}
               y={imageProps.y}
+              width={imageProps.width}
+              height={imageProps.height}
               shadowBlur={1000}
-              // onDragEnd={handleDragEnd}
-              // onDragMove={handleDragMove}
-              // onDragStart={handleDragStart}
               onDblClick={toggleCropPanel}
-              onClick={handleImageClick}
+              onClick={toggleImagePanel}
+              onDragEnd={saveImageDimension}
+              onTransformEnd={saveImageDimension}
+              dragBoundFunc={(pos) => constrainNode(pos, "image")}
               style={{
                 background: "black",
               }}
@@ -563,9 +442,18 @@ const VideoController = () => {
               keepRatio={false}
               boundBoxFunc={(oldBox, newBox) => {
                 // limits for resizing
-                if (newBox.width < 100 || newBox.height < 100) {
+                if (newBox.width < 100 || newBox.height < 100) return oldBox;
+                if (newBox.x < 0 || newBox.y < 0) return oldBox;
+                if (
+                  Math.round(newBox.x) + Math.round(newBox.width) >
+                  stageDimensions.width
+                )
                   return oldBox;
-                }
+                if (
+                  Math.round(newBox.y) + Math.round(newBox.height) >
+                  stageDimensions.height
+                )
+                  return oldBox;
                 return newBox;
               }}
             />
@@ -583,7 +471,7 @@ const VideoController = () => {
                 onDblClick={toggleCropPanel}
                 // @ts-ignore
                 ref={rectRef}
-                dragBoundFunc={constrainRect}
+                dragBoundFunc={(pos) => constrainNode(pos, "rect")}
                 onTransformEnd={saveCropPanelDimension}
                 onDragEnd={saveCropPanelDimension}
               />

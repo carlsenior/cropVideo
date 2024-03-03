@@ -110,6 +110,12 @@ export function canvasPropsReducer(
         break;
       case CanvasActions.SAVE_CROP_DIMENSION:
         draft.current.cropRect = action.payload;
+        draft.current.canvasAction = CanvasActions.SELECT_CROP;
+        recordHistory(draft);
+        break;
+      case CanvasActions.SAVE_IMAGE_DIMENSION:
+        draft.current.imageProps = action.payload;
+        draft.current.canvasAction = CanvasActions.SELECT_IMAGE;
         recordHistory(draft);
       default:
     }

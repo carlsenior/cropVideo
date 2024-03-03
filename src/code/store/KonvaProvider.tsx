@@ -7,13 +7,6 @@ import React from "react";
 const initialKonvaContextValue: KonvaContextType = {
   canvasState: initialCanvasHistoryState,
   dispatch: () => {},
-  // canvasDispatch: () => {},
-  // handleDragMove: () => {},
-  // handleUndo: () => {},
-  // handleRedo: () => {},
-  // handleDragEnd: () => {},
-  // handleDragStart: () => {},
-  // handleResize: () => {},
 };
 
 export const KonvaContext = createContext<KonvaContextType>(
@@ -25,13 +18,6 @@ export const KonvaProvider = ({ children }: { children: React.ReactNode }) => {
     canvasPropsReducer,
     initialCanvasHistoryState
   );
-
-  // const {
-  //   current: {
-  //     stageDimensions: { stageHeight, stageWidth },
-  //     imageProps: { imageHeight, imageWidth, imageX, imageY },
-  //   },
-  // } = canvasState;
 
   // const getSnapPosition = useCallback(
   //   (pos: any, scaledSize: { width: number; height: number }) => {
@@ -170,23 +156,8 @@ export const KonvaProvider = ({ children }: { children: React.ReactNode }) => {
     () => ({
       canvasState,
       dispatch,
-      // handleDragMove,
-      // handleUndo,
-      // handleRedo,
-      // handleDragEnd,
-      // handleDragStart,
-      // handleResize,
     }),
-    [
-      canvasState,
-      dispatch,
-      // handleDragMove,
-      // handleUndo,
-      // handleRedo,
-      // handleDragEnd,
-      // handleResize,
-      // handleDragStart,
-    ]
+    [canvasState, dispatch]
   );
 
   return (

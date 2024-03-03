@@ -9,6 +9,7 @@ export enum CanvasActions {
   SELECT_CROP = "SELECT_CROP",
   DESELECT_CROP = "DESELECT_CROP",
   SAVE_CROP_DIMENSION = "SAVE_CROP_DIMENSION",
+  SAVE_IMAGE_DIMENSION = "SAVE_IMAGE_DIMENSION",
 
   RESIZE = "resize",
   CROP = "crop",
@@ -39,6 +40,15 @@ export type CanvasReducerAction =
   | { type: CanvasActions.DESELECT_CROP }
   | {
       type: CanvasActions.SAVE_CROP_DIMENSION;
+      payload: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      };
+    }
+  | {
+      type: CanvasActions.SAVE_IMAGE_DIMENSION;
       payload: {
         x: number;
         y: number;
