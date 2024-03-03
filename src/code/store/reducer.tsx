@@ -25,6 +25,7 @@ export const initialCanvasHistoryState: CanvasHistoryState = {
   current: initialCanvasState,
   undoStack: [initialCanvasState],
   redoStack: [],
+  keepRatio: false,
 };
 
 function recordHistory(draft: CanvasHistoryState) {
@@ -121,16 +122,17 @@ export function canvasPropsReducer(
         // update all width and x coordinates
         draft.current.imageProps = {
           ...draft.current.imageProps,
-          width: draft.current.imageProps.width * scaleX,
+          width: draft.current.imageProps.height * aspectRatio,
           x: draft.current.imageProps.x * scaleX,
           restrict: draft.current.imageProps.restrict * scaleX,
         };
         draft.current.cropRect = {
           ...draft.current.cropRect,
-          width: draft.current.cropRect.width * scaleX,
+          width: draft.current.cropRect.height * aspectRatio,
           x: draft.current.cropRect.x * scaleX,
           restrict: draft.current.cropRect.restrict * scaleX,
         };
+        draft.keepRatio = true;
         draft.current.canvasAction = CanvasActions.NONE;
         recordHistory(draft);
         break;

@@ -24,15 +24,10 @@ export type CanvasHistoryState = {
   current: CanvasProps;
   undoStack: CanvasProps[];
   redoStack: CanvasProps[];
+  keepRatio: boolean;
 };
 
 export type KonvaContextType = {
   canvasState: CanvasHistoryState;
   dispatch: React.Dispatch<CanvasReducerAction>;
-  // handleDragMove: (e: Konva.KonvaEventObject<DragEvent>) => void;
-  // handleUndo: () => void;
-  // handleRedo: () => void;
-  // handleDragStart: () => void;
-  // handleDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => void;
-  // handleResize: (e: any) => void;
 };

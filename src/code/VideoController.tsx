@@ -16,6 +16,7 @@ const VideoController = () => {
     current: { imageProps, cropRect, stageDimensions, canvasAction },
     undoStack,
     redoStack,
+    keepRatio,
   } = canvasState;
 
   const [image, setImage] = useState<Konva.Image | undefined>(undefined);
@@ -375,7 +376,13 @@ const VideoController = () => {
               ref={trRef}
               rotateEnabled={false}
               flipEnabled={false}
-              keepRatio={false}
+              keepRatio={keepRatio}
+              enabledAnchors={[
+                "top-left",
+                "top-right",
+                "bottom-left",
+                "bottom-right",
+              ]}
               boundBoxFunc={(oldBox, newBox) => {
                 // limits for resizing
                 if (
@@ -402,6 +409,8 @@ const VideoController = () => {
             <>
               <Rect
                 id="crop"
+                // @ts-ignore
+                ref={rectRef}
                 x={cropRect.x}
                 y={cropRect.y}
                 width={cropRect.width}
@@ -409,8 +418,6 @@ const VideoController = () => {
                 fill="rgba(255,255,255,0.25)"
                 draggable
                 onDblClick={toggleCropPanel}
-                // @ts-ignore
-                ref={rectRef}
                 dragBoundFunc={(pos) => constrainNode(pos, "rect")}
                 onTransformEnd={saveCropPanelDimension}
                 onDragEnd={saveCropPanelDimension}
@@ -420,7 +427,13 @@ const VideoController = () => {
                 ref={transformerRef}
                 rotateEnabled={false}
                 flipEnabled={false}
-                keepRatio={false}
+                keepRatio={keepRatio}
+                enabledAnchors={[
+                  "top-left",
+                  "top-right",
+                  "bottom-left",
+                  "bottom-right",
+                ]}
                 boundBoxFunc={(oldBox, newBox) => {
                   if (
                     newBox.width < cropRect.restrict ||
