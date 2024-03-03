@@ -84,58 +84,6 @@ const VideoController = () => {
     };
   }, [videoRef]);
 
-  // Confirm crop selection
-  const confirmCrop = () => {
-    // imageDispatch({
-    // 	type: "set_image_action",
-    // 	payload: {
-    // 		imageAction: CanvasActions.NONE,
-    // 	},
-    // });
-    // @ts-ignore
-    const { x, y, width, height } = rectRef.current.attrs;
-
-    // Update the video dimensions to match the overlay dimensions
-    // setStageDimensions({
-    //   width: width,
-    //   height: height,
-    // });
-
-    console.log(x);
-    const newVideoPosition = {
-      x: -x,
-      y: -y,
-    };
-
-    const newVideoDimensions = {
-      width,
-      height,
-    };
-    // setClipDimensions({ x, y, width, height });
-
-    // imageDispatch({
-    // 	type: "crop",
-    // 	payload: {
-    // 		height: newVideoDimensions.height,
-    // 		width: newVideoDimensions.width,
-    // 		x: newVideoPosition.x,
-    // 		y: newVideoPosition.y,
-    // 	},
-    // });
-  };
-
-  const setTikTokFormat = () => {
-    dispatch({
-      type: CanvasActions.SET_TIKTOK_FORMAT,
-    });
-  };
-
-  const setYoutubeFormat = () => {
-    dispatch({
-      type: CanvasActions.SET_YOUTUBE_FORMAT,
-    });
-  };
-
   const getNodePosition = (node: any) => {
     if (!node) return null;
     // @ts-ignore
@@ -249,15 +197,6 @@ const VideoController = () => {
     }, 200);
   };
 
-  // redo
-  const handleRedo = () => {
-    dispatch({ type: CanvasActions.REDO });
-  };
-  // undo
-  const handleUndo = () => {
-    dispatch({ type: CanvasActions.UNDO });
-  };
-
   // double click of image
   const toggleCropPanel = () => {
     if (clickTimeout.current) {
@@ -307,7 +246,7 @@ const VideoController = () => {
     });
   };
 
-  const showCrop = () => {
+  const activateCrop = () => {
     dispatch({
       type: CanvasActions.CROP,
     });
@@ -315,10 +254,18 @@ const VideoController = () => {
 
   return (
     <div style={{ background: "white" }}>
-      <button onClick={setTikTokFormat}>Set TikTok Format (9:16)</button>
-      <button onClick={setYoutubeFormat}>Set Youtube Format (16:9)</button>
       <button
-        onClick={showCrop}
+        onClick={() => dispatch({ type: CanvasActions.SET_TIKTOK_FORMAT })}
+      >
+        Set TikTok Format (9:16)
+      </button>
+      <button
+        onClick={() => dispatch({ type: CanvasActions.SET_YOUTUBE_FORMAT })}
+      >
+        Set Youtube Format (16:9)
+      </button>
+      <button
+        onClick={activateCrop}
         disabled={
           canvasAction !== CanvasActions.SELECT_CROP &&
           canvasAction !== CanvasActions.CROP
@@ -326,10 +273,16 @@ const VideoController = () => {
       >
         Crop Video
       </button>
-      <button onClick={handleRedo} disabled={redoStack.length === 0}>
+      <button
+        onClick={() => dispatch({ type: CanvasActions.REDO })}
+        disabled={redoStack.length === 0}
+      >
         redo
       </button>
-      <button onClick={handleUndo} disabled={undoStack.length === 1}>
+      <button
+        onClick={() => dispatch({ type: CanvasActions.UNDO })}
+        disabled={undoStack.length === 1}
+      >
         undo
       </button>
       <Stage
@@ -462,7 +415,9 @@ const VideoController = () => {
           )}
         </Layer>
       </Stage>
-      <button onClick={confirmCrop}>Confirm Crop</button>
+      <button onClick={() => dispatch({ type: CanvasActions.CONFIRM_CROP })}>
+        Confirm Crop
+      </button>
       <video
         ref={videoRef}
         src={src}

@@ -1,8 +1,4 @@
-import {
-  CanvasProps,
-  CanvasHistoryState,
-  ImageProps,
-} from "../../constants/types";
+import { CanvasProps, CanvasHistoryState } from "../../constants/types";
 import { CanvasActions, CanvasReducerAction } from "../store/actions";
 import { produce } from "immer";
 
@@ -48,6 +44,22 @@ export function canvasPropsReducer(
       case CanvasActions.SET_IMAGE_CROP:
         draft.current.imageCrop = action.payload;
         draft.undoStack.push({ ...draft.current });
+        break;
+      case CanvasActions.CONFIRM_CROP:
+        draft.current.stageDimensions =
+          draft.current.cropRect =
+          draft.current.imageProps =
+            {
+              x: 0,
+              y: 0,
+              width: Math.round(draft.current.imageProps.width),
+              height: Math.round(draft.current.imageProps.height),
+              restrict: 100,
+            };
+        draft.current.canvasAction = CanvasActions.NONE;
+        draft.keepRatio = false;
+        draft.redoStack = [];
+        draft.undoStack = [{ ...draft.current }];
         break;
       case CanvasActions.CROP:
         // get intersection between cropRect and imageRect

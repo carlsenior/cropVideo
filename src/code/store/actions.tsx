@@ -14,7 +14,7 @@ export enum CanvasActions {
   SET_TIKTOK_FORMAT = "SET_TIKTOK_FORMAT",
   CROP = "CROP",
   SET_IMAGE_CROP = "SET_IMAGE_CROP",
-  // todo: set aspect ratio. tik tok format vs youtube format etc.
+  CONFIRM_CROP = "CONFIRM_CROP",
   // todo: add text to canvas
 }
 
@@ -55,4 +55,7 @@ export type CanvasReducerAction =
         width: number;
         height: number;
       };
+    }
+  | {
+      type: CanvasActions.CONFIRM_CROP;
     };
