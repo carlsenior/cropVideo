@@ -8,13 +8,6 @@ export type ImageProps = {
   restrict: number;
 };
 
-export type ActualCropedProps = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
 export type ImageCrop = {
   x: number;
   y: number;

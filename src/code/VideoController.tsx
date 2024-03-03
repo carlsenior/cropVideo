@@ -28,8 +28,10 @@ const VideoController = () => {
   const trRef = useRef(null);
   const transformerRef = useRef();
 
+  const clickTimeout = useRef<NodeJS.Timeout | null>(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
 
+  // called at the first loading of the video component
   const setVideoDimensions = () => {
     dispatch({
       type: CanvasActions.SET_IMAGE_CROP,
@@ -44,6 +46,7 @@ const VideoController = () => {
     });
   };
 
+  // effect for key event for undo/redo
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey) {
@@ -66,6 +69,7 @@ const VideoController = () => {
     };
   }, []);
 
+  // most important - main canvas drawing
   const updateCanvas = useCallback(() => {
     // @ts-ignore
     if (videoRef.current && videoRef.current.readyState >= 3) {
@@ -84,6 +88,7 @@ const VideoController = () => {
     };
   }, [videoRef]);
 
+  // helper function to get actual position of konva shape node
   const getNodePosition = (node: any) => {
     if (!node) return null;
     // @ts-ignore
@@ -113,6 +118,7 @@ const VideoController = () => {
     };
   };
 
+  // constrain transform and moving of node
   const constrainNode = (pos: Vector2d, that: string) => {
     if (pos.x < 0) pos.x = 0;
     if (pos.y < 0) pos.y = 0;
@@ -131,8 +137,7 @@ const VideoController = () => {
     return pos;
   };
 
-  // timer callback
-  const clickTimeout = useRef<NodeJS.Timeout | null>(null);
+  // timer callback - called once at first loading
   useEffect(() => {
     return () => {
       if (clickTimeout.current) {
@@ -142,7 +147,6 @@ const VideoController = () => {
   }, []);
 
   // effect for image transformer
-
   useEffect(() => {
     // image transformer
     const transformer = trRef && trRef.current;
@@ -163,7 +167,6 @@ const VideoController = () => {
   }, [canvasAction, imageCrop, imageProps]);
 
   // effect for crop transformer
-
   useEffect(() => {
     if (transformerRef && transformerRef.current) {
       // Update the transformer's nodes
@@ -178,7 +181,7 @@ const VideoController = () => {
     }
   }, [canvasAction, cropRect]);
 
-  // single click of image
+  // toggle showing of image Rect
   const toggleImagePanel = () => {
     if (clickTimeout.current !== null) {
       clearTimeout(clickTimeout.current);
@@ -197,7 +200,7 @@ const VideoController = () => {
     }, 200);
   };
 
-  // double click of image
+  // toggle showing of crop Rect
   const toggleCropPanel = () => {
     if (clickTimeout.current) {
       clearTimeout(clickTimeout.current);
@@ -216,6 +219,7 @@ const VideoController = () => {
     }, 200);
   };
 
+  // save crop dimension for undo/redo
   const saveCropPanelDimension = () => {
     const rectPos = getNodePosition(rectRef.current)!;
     if (
@@ -231,6 +235,7 @@ const VideoController = () => {
     });
   };
 
+  // save image dimension for undo/redo
   const saveImageDimension = () => {
     const imagePos = getNodePosition(imageRef.current)!;
     if (
@@ -246,6 +251,7 @@ const VideoController = () => {
     });
   };
 
+  // process crop action
   const activateCrop = () => {
     dispatch({
       type: CanvasActions.CROP,

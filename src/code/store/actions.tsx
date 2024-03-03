@@ -1,5 +1,3 @@
-import { ImageProps } from "../../constants/types";
-
 export enum CanvasActions {
   NONE = "NONE",
   UNDO = "UNDO",

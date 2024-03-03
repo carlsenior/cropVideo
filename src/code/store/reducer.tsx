@@ -14,6 +14,7 @@ const initialCanvasState: CanvasProps = {
   imageProps: initialRect,
   cropRect: initialRect,
   stageDimensions: initialRect,
+  // most important object for image crop
   imageCrop: {
     x: 0,
     y: 0,

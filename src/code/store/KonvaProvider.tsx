@@ -1,6 +1,5 @@
 import { useReducer, useMemo, createContext } from "react";
 import { canvasPropsReducer, initialCanvasHistoryState } from "./reducer";
-import { CanvasReducerAction } from "./actions";
 import { KonvaContextType } from "../../constants/types";
 import React from "react";
 
