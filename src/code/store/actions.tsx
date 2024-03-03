@@ -6,6 +6,8 @@ export enum CanvasActions {
   REDO = "REDO",
   IMAGE_RESIZE = "IMAGE_RESIZE",
   IMAGE_RELEASE = "IMAGE_RELEASE",
+  RECT_DARG = "RECT_DRAG",
+
   RESIZE = "resize",
   CROP = "crop",
   SELECT_CROP = "select_crop",
@@ -33,12 +35,9 @@ export type CanvasReducerAction =
   | { type: CanvasActions.IMAGE_RELEASE }
   | { type: CanvasActions.UNDO }
   | { type: CanvasActions.REDO }
-  | {
-      type: CanvasActions.SELECT_CROP;
-    }
-  | {
-      type: CanvasActions.DESELECT_CROP;
-    }
+  | { type: CanvasActions.SELECT_CROP }
+  | { type: CanvasActions.DESELECT_CROP }
+  | { type: CanvasActions.RECT_DARG; payload: { x: number; y: number } }
   | {
       type: CanvasActions.DRAG_MOVE;
       payload: { imageX: number; imageY: number };

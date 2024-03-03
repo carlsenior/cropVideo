@@ -2,11 +2,19 @@
 const src =
   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  MutableRefObject,
+} from "react";
 import { Stage, Layer, Image, Rect, Transformer, Group } from "react-konva";
 import Konva from "konva";
 import useKonvaContext from "./useKonvaContext";
 import { CanvasActions } from "./store/actions";
+import { produce } from "immer";
+import { KonvaEventObject } from "konva/lib/Node";
 
 const VideoController = () => {
   const {
@@ -117,8 +125,6 @@ const VideoController = () => {
   // }, [updateCanvas]);
 
   const [showBlank, setShowBlank] = useState<boolean>(false);
-
-  const transformerRef = React.useRef();
 
   // console.log(canvasState);
   const rectRef = useRef();
@@ -247,45 +253,39 @@ const VideoController = () => {
   const animationRef = useRef(null);
   const layerRef = useRef(null);
 
-  useEffect(() => {
-    if (transformerRef.current && canvasAction === CanvasActions.SELECT_CROP) {
-      // Update the transformer's nodes
-      // @ts-ignore
-      transformerRef.current.nodes([rectRef.current]);
-      // @ts-ignore
-      transformerRef.current.getLayer().batchDraw();
+  const constrainRect = (pos: any) => {
+    // dispatch({
+    //   type: CanvasActions.RECT_DARG,
+    //   payload: pos,
+    // });
+
+    let x = pos.x;
+    let y = pos.y;
+    // const rectRight = x + cropRect.width;
+    // const rectBottom = y + cropRect.height;
+    // // Constrain horizontally
+    if (x < 0) x = 0;
+    if (x > stageDimensions.width - 100) {
+      x = stageDimensions.width - 100;
     }
-  }, [canvasAction]);
+    if (y < 0) y = 0;
+    if (y > stageDimensions.height - 100) {
+      y = stageDimensions.height - 100;
+    }
+    // if (rectRight > stageDimensions.width) {
+    //   x = stageDimensions.width - cropRect.width;
+    // }
 
-  // const constrainRect = (pos: any) => {
-  //   const snapThreshold = 20; // pixels within which snapping occurs
+    // // Constrain vertically
+    // if (rectBottom > stageDimensions.height) {
+    //   y = stageDimensions.height - cropRect.height;
+    // }
 
-  //   let x = pos.x;
-  //   let y = pos.y;
-  //   const rectRight = x + cropRectWidth;
-  //   const rectBottom = y + cropRectHeight;
-
-  //   // Constrain horizontally
-  //   if (x < 0) x = 0;
-  //   if (rectRight > stageWidth) {
-  //     x = stageWidth - cropRectWidth;
-  //   }
-
-  //   // Constrain vertically
-  //   if (y < 0) y = 0;
-  //   if (rectBottom > stageHeight) {
-  //     y = stageHeight - cropRectHeight;
-  //   }
-
-  //   const centerSnap = (stageWidth - cropRectWidth) / 2;
-
-  //   // Snap to the center if within threshold
-  //   if (Math.abs(centerSnap - x) <= snapThreshold) {
-  //     x = centerSnap;
-  //   }
-
-  //   return { x, y };
-  // };
+    return {
+      x: cropRect.x,
+      y: cropRect.y,
+    };
+  };
 
   // const getSnapPosition = (
   //   pos: any,
@@ -346,23 +346,6 @@ const VideoController = () => {
   //   return { x: newX, y: newY }; // Return the new position, possibly adjusted for snapping
   // };
 
-  const handleDblClick = () => {
-    if (clickTimeout.current) {
-      clearTimeout(clickTimeout.current);
-      clickTimeout.current = null;
-    }
-
-    // if (canvasState.current.canvasAction === CanvasActions.SELECT_CROP) {
-    //   canvasDispatch({
-    //     type: CanvasActions.DESELECT_CROP,
-    //   });
-    // } else {
-    //   canvasDispatch({
-    //     type: CanvasActions.SELECT_CROP,
-    //   });
-    // }
-  };
-
   // todo redo / undo make sure it works for resizing
 
   const loaded = useRef(false);
@@ -402,7 +385,7 @@ const VideoController = () => {
     };
   }, []);
 
-  // callback for image transformer
+  // effect for image transformer
   const trRef = useRef(null);
   useEffect(() => {
     // image transformer
@@ -417,6 +400,18 @@ const VideoController = () => {
     // }
   }, [canvasAction]);
 
+  // effect for crop transformer
+  const transformerRef = React.useRef();
+  useEffect(() => {
+    if (transformerRef && transformerRef.current) {
+      // Update the transformer's nodes
+      // @ts-ignore
+      transformerRef.current.nodes([rectRef.current]);
+      // @ts-ignore
+      transformerRef.current.getLayer().batchDraw();
+    }
+  }, [canvasAction, cropRect]);
+
   // single click of image
   const handleImageClick = () => {
     if (clickTimeout.current !== null) {
@@ -425,12 +420,10 @@ const VideoController = () => {
     }
     clickTimeout.current = setTimeout(() => {
       if (canvasState.current.canvasAction === CanvasActions.IMAGE_RESIZE) {
-        console.log("iamge release");
         dispatch({
           type: CanvasActions.IMAGE_RELEASE,
         });
       } else {
-        console.log("image resize");
         dispatch({
           type: CanvasActions.IMAGE_RESIZE,
         });
@@ -445,6 +438,24 @@ const VideoController = () => {
   // undo
   const handleUndo = () => {
     dispatch({ type: CanvasActions.UNDO });
+  };
+
+  // double click of image
+  const handleDblClick = () => {
+    if (clickTimeout.current) {
+      clearTimeout(clickTimeout.current);
+      clickTimeout.current = null;
+    }
+
+    if (canvasState.current.canvasAction === CanvasActions.SELECT_CROP) {
+      dispatch({
+        type: CanvasActions.DESELECT_CROP,
+      });
+    } else {
+      dispatch({
+        type: CanvasActions.SELECT_CROP,
+      });
+    }
   };
 
   return (
@@ -470,6 +481,7 @@ const VideoController = () => {
           marginLeft: "auto",
           marginRight: "auto",
         }}
+        onDblClick={handleDblClick}
       >
         <Layer ref={layerRef} id="layer" style={{ background: "black" }}>
           <Group
@@ -517,6 +529,9 @@ const VideoController = () => {
               id="resize"
               //@ts-ignore
               ref={trRef}
+              rotateEnabled={false}
+              flipEnabled={false}
+              keepRatio={false}
               boundBoxFunc={(oldBox, newBox) => {
                 // limits for resizing
                 if (newBox.width < 100 || newBox.height < 100) {
@@ -524,14 +539,15 @@ const VideoController = () => {
                 }
                 return newBox;
               }}
-              flipEnabled={false}
-              keepRatio={false}
             />
           )}
-          {canvasAction === CanvasActions.SELECT_CROP && (
+          {(canvasAction === CanvasActions.SELECT_CROP ||
+            canvasAction === CanvasActions.RECT_DARG) && (
             <>
               <Rect
                 id="crop"
+                x={cropRect.x}
+                y={cropRect.y}
                 width={cropRect.width}
                 height={cropRect.height}
                 fill="rgba(255,255,255,0.25)"
@@ -546,20 +562,28 @@ const VideoController = () => {
               <Transformer
                 // @ts-ignore
                 ref={transformerRef}
+                rotateEnabled={false}
                 flipEnabled={false}
                 keepRatio={false}
-                // boundBoxFunc={(oldBox, newBox) => {
-                //   if (newBox.x < 0 || newBox.y < 0) {
-                //     return oldBox;
-                //   }
-                //   if (
-                //     newBox.x + newBox.width > stageWidth ||
-                //     newBox.y + newBox.height > stageHeight
-                //   ) {
-                //     return oldBox;
-                //   }
-                //   return newBox;
+                // onDragMove={(e: KonvaEventObject<MouseEvent>) => {
+                //   console.log("drag move - ", e);
+                //   e.evt.preventDefault();
                 // }}
+                boundBoxFunc={(oldBox, newBox) => {
+                  if (newBox.width < 100 || newBox.height < 100) return oldBox;
+                  if (newBox.x < 0 || newBox.y < 0) return oldBox;
+                  if (
+                    Math.round(newBox.x) + Math.round(newBox.width) >
+                    stageDimensions.width
+                  )
+                    return oldBox;
+                  if (
+                    Math.round(newBox.y) + Math.round(newBox.height) >
+                    stageDimensions.height
+                  )
+                    return oldBox;
+                  return newBox;
+                }}
               />
             </>
           )}

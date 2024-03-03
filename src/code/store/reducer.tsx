@@ -98,21 +98,63 @@ export function canvasPropsReducer(
         }
         break;
       case CanvasActions.SELECT_CROP:
-        // draft.current.canvasAction = CanvasActions.SELECT_CROP;
+        draft.current.canvasAction = CanvasActions.SELECT_CROP;
+        recordHistory(draft);
         break;
 
       case CanvasActions.DESELECT_CROP:
-        // draft.current.canvasAction = CanvasActions.NONE;
+        draft.current.canvasAction = CanvasActions.NONE;
+        recordHistory(draft);
         break;
+      case CanvasActions.RECT_DARG: // constrain 100 * 100 size at least
+        let left = action.payload.x;
+        let top = action.payload.y;
+        let right = action.payload.x + draft.current.cropRect.width;
+        let bottom = action.payload.y + draft.current.cropRect.height;
 
-      case "undo":
-        //   undoAction(draft);
+        if (left < 0) {
+          left = 0;
+          if (right < 100) right = 100;
+        } else if (left > draft.current.stageDimensions.width - 100) {
+          right = draft.current.stageDimensions.width;
+          left = draft.current.stageDimensions.width - 100;
+        }
+        if (top < 0) {
+          top = 0;
+          if (bottom < 100) bottom = 100;
+        } else if (top > draft.current.stageDimensions.height - 100) {
+          top = draft.current.stageDimensions.height - 100;
+          bottom = draft.current.stageDimensions.height;
+        }
+
+        // if (left > draft.current.stageDimensions.width - 100) {
+        //   left = draft.current.stageDimensions.width - 100;
+        //   right = draft.current.stageDimensions.width;
+        // }
+
+        // if (top > draft.current.stageDimensions.height - 100) {
+        //   top = draft.current.stageDimensions.height - 100;
+        //   bottom = draft.current.stageDimensions.height;
+        // }
+
+        // if (right > draft.current.stageDimensions.width) {
+        //   // if exceeds max width after moved
+        //   right = draft.current.stageDimensions.width;
+        // }
+        // if (bottom > draft.current.stageDimensions.height) {
+        //   // if exceeds max height after moved
+        //   bottom = draft.current.stageDimensions.height;
+        // }
+
+        const newCropRect = {
+          x: left,
+          y: top,
+          width: right - left,
+          height: bottom - top,
+        };
+        draft.current.cropRect = newCropRect;
+        draft.current.canvasAction = CanvasActions.RECT_DARG;
         break;
-
-      case "redo":
-        //   redoAction(draft);
-        break;
-
       case "reset":
       default:
     }
