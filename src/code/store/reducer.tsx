@@ -11,6 +11,8 @@ const initialRect = {
   y: 0,
   width: 720,
   height: 360,
+  scaleX: 1,
+  scaleY: 1,
 };
 
 const initialCanvasState: CanvasProps = {
@@ -74,12 +76,12 @@ export function canvasPropsReducer(
         // draft.current.imageProps.imageY = action.payload.imageY;
         break;
 
-      case CanvasActions.IMAGE_RESIZE:
-        draft.current.canvasAction = CanvasActions.IMAGE_RESIZE;
+      case CanvasActions.SELECT_IMAGE:
+        draft.current.canvasAction = CanvasActions.SELECT_IMAGE;
         recordHistory(draft);
         break;
 
-      case CanvasActions.IMAGE_RELEASE:
+      case CanvasActions.RELEASE_IMAGE:
         draft.current.canvasAction = CanvasActions.NONE;
         recordHistory(draft);
         break;
@@ -106,56 +108,9 @@ export function canvasPropsReducer(
         draft.current.canvasAction = CanvasActions.NONE;
         recordHistory(draft);
         break;
-      case CanvasActions.RECT_DARG: // constrain 100 * 100 size at least
-        let left = action.payload.x;
-        let top = action.payload.y;
-        let right = action.payload.x + draft.current.cropRect.width;
-        let bottom = action.payload.y + draft.current.cropRect.height;
-
-        if (left < 0) {
-          left = 0;
-          if (right < 100) right = 100;
-        } else if (left > draft.current.stageDimensions.width - 100) {
-          right = draft.current.stageDimensions.width;
-          left = draft.current.stageDimensions.width - 100;
-        }
-        if (top < 0) {
-          top = 0;
-          if (bottom < 100) bottom = 100;
-        } else if (top > draft.current.stageDimensions.height - 100) {
-          top = draft.current.stageDimensions.height - 100;
-          bottom = draft.current.stageDimensions.height;
-        }
-
-        // if (left > draft.current.stageDimensions.width - 100) {
-        //   left = draft.current.stageDimensions.width - 100;
-        //   right = draft.current.stageDimensions.width;
-        // }
-
-        // if (top > draft.current.stageDimensions.height - 100) {
-        //   top = draft.current.stageDimensions.height - 100;
-        //   bottom = draft.current.stageDimensions.height;
-        // }
-
-        // if (right > draft.current.stageDimensions.width) {
-        //   // if exceeds max width after moved
-        //   right = draft.current.stageDimensions.width;
-        // }
-        // if (bottom > draft.current.stageDimensions.height) {
-        //   // if exceeds max height after moved
-        //   bottom = draft.current.stageDimensions.height;
-        // }
-
-        const newCropRect = {
-          x: left,
-          y: top,
-          width: right - left,
-          height: bottom - top,
-        };
-        draft.current.cropRect = newCropRect;
-        draft.current.canvasAction = CanvasActions.RECT_DARG;
-        break;
-      case "reset":
+      case CanvasActions.SAVE_CROP_DIMENSION:
+        draft.current.cropRect = action.payload;
+        recordHistory(draft);
       default:
     }
     return draft;

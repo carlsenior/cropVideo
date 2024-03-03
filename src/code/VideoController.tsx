@@ -2,18 +2,20 @@
 const src =
   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-  MutableRefObject,
-} from "react";
-import { Stage, Layer, Image, Rect, Transformer, Group } from "react-konva";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import {
+  Stage,
+  Layer,
+  Image,
+  Transformer,
+  Group,
+  Rect,
+  KonvaNodeComponent,
+} from "react-konva";
 import Konva from "konva";
 import useKonvaContext from "./useKonvaContext";
 import { CanvasActions } from "./store/actions";
-import { produce } from "immer";
+import { Vector2d } from "konva/lib/types";
 import { KonvaEventObject } from "konva/lib/Node";
 
 const VideoController = () => {
@@ -126,7 +128,6 @@ const VideoController = () => {
 
   const [showBlank, setShowBlank] = useState<boolean>(false);
 
-  // console.log(canvasState);
   const rectRef = useRef();
   // const [clipDimensions, setClipDimensions] = useState({
   //   x: 0,
@@ -253,38 +254,52 @@ const VideoController = () => {
   const animationRef = useRef(null);
   const layerRef = useRef(null);
 
-  const constrainRect = (pos: any) => {
-    // dispatch({
-    //   type: CanvasActions.RECT_DARG,
-    //   payload: pos,
-    // });
-
-    let x = pos.x;
-    let y = pos.y;
-    // const rectRight = x + cropRect.width;
-    // const rectBottom = y + cropRect.height;
-    // // Constrain horizontally
-    if (x < 0) x = 0;
-    if (x > stageDimensions.width - 100) {
-      x = stageDimensions.width - 100;
-    }
-    if (y < 0) y = 0;
-    if (y > stageDimensions.height - 100) {
-      y = stageDimensions.height - 100;
-    }
-    // if (rectRight > stageDimensions.width) {
-    //   x = stageDimensions.width - cropRect.width;
-    // }
-
-    // // Constrain vertically
-    // if (rectBottom > stageDimensions.height) {
-    //   y = stageDimensions.height - cropRect.height;
-    // }
+  const getRectPosition = () => {
+    if (!rectRef.current) return null;
+    const rect = rectRef.current;
+    // @ts-ignore
+    const width =
+      // @ts-ignore
+      rect.attrs.scaleX !== undefined
+        ? // @ts-ignore
+          rect.attrs.width * rect.attrs.scaleX
+        : // @ts-ignore
+          rect.attrs.width;
+    // @ts-ignore
+    const height =
+      // @ts-ignore
+      rect.attrs.scaleY !== undefined
+        ? // @ts-ignore
+          rect.attrs.height * rect.attrs.scaleY
+        : // @ts-ignore
+          rect.attrs.height;
 
     return {
-      x: cropRect.x,
-      y: cropRect.y,
+      // @ts-ignore
+      x: rect.attrs.x,
+      // @ts-ignore
+      y: rect.attrs.y,
+      width,
+      height,
     };
+  };
+
+  const constrainRect = (pos: Vector2d) => {
+    if (pos.x < 0) pos.x = 0;
+    if (pos.y < 0) pos.y = 0;
+
+    const rect = rectRef.current;
+    if (rect) {
+      const rectPosition = getRectPosition()!;
+
+      if (pos.x + rectPosition.width > stageDimensions.width) {
+        pos.x = stageDimensions.width - rectPosition.width;
+      }
+      if (pos.y + rectPosition.height > stageDimensions.height) {
+        pos.y = stageDimensions.height - rectPosition.height;
+      }
+    }
+    return pos;
   };
 
   // const getSnapPosition = (
@@ -405,6 +420,10 @@ const VideoController = () => {
   useEffect(() => {
     if (transformerRef && transformerRef.current) {
       // Update the transformer's nodes
+      if (rectRef.current) {
+        // @ts-ignore
+        rectRef.current.scale({ x: 1, y: 1 });
+      }
       // @ts-ignore
       transformerRef.current.nodes([rectRef.current]);
       // @ts-ignore
@@ -419,13 +438,13 @@ const VideoController = () => {
       clickTimeout.current = null;
     }
     clickTimeout.current = setTimeout(() => {
-      if (canvasState.current.canvasAction === CanvasActions.IMAGE_RESIZE) {
+      if (canvasState.current.canvasAction === CanvasActions.SELECT_IMAGE) {
         dispatch({
-          type: CanvasActions.IMAGE_RELEASE,
+          type: CanvasActions.RELEASE_IMAGE,
         });
       } else {
         dispatch({
-          type: CanvasActions.IMAGE_RESIZE,
+          type: CanvasActions.SELECT_IMAGE,
         });
       }
     }, 200);
@@ -441,7 +460,7 @@ const VideoController = () => {
   };
 
   // double click of image
-  const handleDblClick = () => {
+  const toggleCropPanel = () => {
     if (clickTimeout.current) {
       clearTimeout(clickTimeout.current);
       clickTimeout.current = null;
@@ -456,6 +475,16 @@ const VideoController = () => {
         type: CanvasActions.SELECT_CROP,
       });
     }
+  };
+
+  const saveCropPanelDimension = () => {
+    const rectPos = getRectPosition()!;
+    // @ts-ignore
+    // rectRef.current.scale({ x: 1, y: 1 });
+    dispatch({
+      type: CanvasActions.SAVE_CROP_DIMENSION,
+      payload: rectPos,
+    });
   };
 
   return (
@@ -481,22 +510,22 @@ const VideoController = () => {
           marginLeft: "auto",
           marginRight: "auto",
         }}
-        onDblClick={handleDblClick}
+        onDblClick={toggleCropPanel}
       >
         <Layer ref={layerRef} id="layer" style={{ background: "black" }}>
           <Group
-            clipX={canvasAction === CanvasActions.SELECT_CROP ? cropRect.x : 0}
-            clipY={canvasAction === CanvasActions.SELECT_CROP ? cropRect.y : 0}
-            clipWidth={
-              canvasAction === CanvasActions.SELECT_CROP
-                ? cropRect.width
-                : stageDimensions.width
-            }
-            clipHeight={
-              canvasAction === CanvasActions.SELECT_CROP
-                ? cropRect.height
-                : stageDimensions.height
-            }
+            // clipX={canvasAction === CanvasActions.SELECT_CROP ? cropRect.x : 0}
+            // clipY={canvasAction === CanvasActions.SELECT_CROP ? cropRect.y : 0}
+            // clipWidth={
+            //   canvasAction === CanvasActions.SELECT_CROP
+            //     ? cropRect.width
+            //     : stageDimensions.width
+            // }
+            // clipHeight={
+            //   canvasAction === CanvasActions.SELECT_CROP
+            //     ? cropRect.height
+            //     : stageDimensions.height
+            // }
             style={{
               background: "black",
             }}
@@ -515,7 +544,7 @@ const VideoController = () => {
               // onDragEnd={handleDragEnd}
               // onDragMove={handleDragMove}
               // onDragStart={handleDragStart}
-              onDblClick={handleDblClick}
+              onDblClick={toggleCropPanel}
               onClick={handleImageClick}
               style={{
                 background: "black",
@@ -524,7 +553,7 @@ const VideoController = () => {
             />
           </Group>
 
-          {canvasAction === CanvasActions.IMAGE_RESIZE && (
+          {canvasAction === CanvasActions.SELECT_IMAGE && (
             <Transformer
               id="resize"
               //@ts-ignore
@@ -541,8 +570,7 @@ const VideoController = () => {
               }}
             />
           )}
-          {(canvasAction === CanvasActions.SELECT_CROP ||
-            canvasAction === CanvasActions.RECT_DARG) && (
+          {canvasAction === CanvasActions.SELECT_CROP && (
             <>
               <Rect
                 id="crop"
@@ -552,12 +580,12 @@ const VideoController = () => {
                 height={cropRect.height}
                 fill="rgba(255,255,255,0.25)"
                 draggable
-                onDblClick={handleDblClick}
+                onDblClick={toggleCropPanel}
                 // @ts-ignore
                 ref={rectRef}
-                // dragBoundFunc={constrainRect}
-                // TODO HANDLECROP
-                // onTransformEnd={handleCrop}
+                dragBoundFunc={constrainRect}
+                onTransformEnd={saveCropPanelDimension}
+                onDragEnd={saveCropPanelDimension}
               />
               <Transformer
                 // @ts-ignore
@@ -565,10 +593,6 @@ const VideoController = () => {
                 rotateEnabled={false}
                 flipEnabled={false}
                 keepRatio={false}
-                // onDragMove={(e: KonvaEventObject<MouseEvent>) => {
-                //   console.log("drag move - ", e);
-                //   e.evt.preventDefault();
-                // }}
                 boundBoxFunc={(oldBox, newBox) => {
                   if (newBox.width < 100 || newBox.height < 100) return oldBox;
                   if (newBox.x < 0 || newBox.y < 0) return oldBox;
